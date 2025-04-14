@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0; url=/#" />
+    <title>Redirecionando...</title>
+    <script>
+      // Redireciona qualquer rota não encontrada para hash
+      const path = window.location.pathname;
+      const search = window.location.search || "";
+      const hash = window.location.hash || "";
+      const newUrl = window.location.origin + "/#" + path + search + hash;
+      window.location.replace(newUrl);
+    </script>
+  </head>
+  <body>
+    Redirecionando...
+  </body>
+</html>
