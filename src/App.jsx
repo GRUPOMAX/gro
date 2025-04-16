@@ -67,6 +67,10 @@ import EsqueciSenha from './pages/EsqueciSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 
 
+import { solicitarPermissaoENotificar } from './firebase' // <- já criamos no firebase.js
+
+
+
 
 function App() {
   useSyncReagendamentos()
@@ -121,7 +125,10 @@ function App() {
           if (resEmpresa.list && resEmpresa.list.length > 0) {
             const user = resEmpresa.list[0]
             const tipoUsuario = user.tipo?.toLowerCase()
+            
   
+            await solicitarPermissaoENotificar(); // <== aqui
+        
             localStorage.setItem('token', 'empresa-logada')
             localStorage.setItem('empresa_id', user.Id)
             localStorage.setItem('empresa_nome', user.empresa_nome || '')
@@ -132,6 +139,7 @@ function App() {
             localStorage.setItem('telefone', user.telefone || '')
             localStorage.setItem('UnicID', user.UnicID || '')
             localStorage.setItem('Limite_de_Ordem', user.Limite_de_Ordem || '')
+
   
             setAuth(true)
             setTipo(tipoUsuario)
@@ -140,6 +148,8 @@ function App() {
   
           if (resTecnico.list && resTecnico.list.length > 0) {
             const tecnico = resTecnico.list[0]
+
+            await solicitarPermissaoENotificar(); // <== aqui
   
             localStorage.setItem('token', 'tecnico-logado')
             localStorage.setItem('tecnico_id', tecnico.Id)

@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../services/api';
+import { apiGet, apiPatch } from '../services/api';
 import { Box, Button, FormControl, FormLabel, Input, Flex, Heading, Image, useToast, Stack } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import DashboardAnimado from './DashboardAnimado';
+import { solicitarPermissaoENotificar } from '../firebase';
+import { getMessaging, getToken } from 'firebase/messaging';
+import { messaging } from '../firebase'; // ajuste esse import com base no seu setup
+
 
 
 // Detecta se é mobile
@@ -17,12 +21,30 @@ function Login({ setAuth }) {
   const [carregandoLogin, setCarregandoLogin] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
   const [mobile, setMobile] = useState(isMobile());
+  const [tokenFCM, setTokenFCM] = useState('');
 
   const fullText = 'SGO';
   const toast = useToast();
   const navigate = useNavigate();
 
 
+  useEffect(() => {
+    async function gerarToken() {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const token = await getToken(messaging, {
+            vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
+          });
+          setTokenFCM(token);
+        }
+      } catch (error) {
+        console.error('Erro ao obter token FCM:', error);
+      }
+    }
+  
+    gerarToken();
+  }, []);
 
   // Seu useEffect de typing (SGO)
   useEffect(() => {
@@ -80,9 +102,24 @@ function Login({ setAuth }) {
         localStorage.setItem('savedSenha', senhaLimpa);
 
         setAuth(true);
+
+        // 🟢 Salva o token FCM no campo `token_fcm` da empresa (se tiver token válido)
+        if (user?.Id && tokenFCM) {
+          try {
+            await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', {
+              Id: user.Id,
+              token_fcm: tokenFCM
+            });
+          } catch (err) {
+            console.error('❌ Erro ao salvar token FCM no NocoDB:', err);
+          }
+        }
+        
+        // ⏱️ Redireciona após login
         setTimeout(() => {
           navigate(tipoUsuario === 'admin' ? '/admin' : '/empresa');
         }, 50);
+        
 
         return;
       }
@@ -105,6 +142,21 @@ function Login({ setAuth }) {
         localStorage.setItem('savedSenha', senhaLimpa);
 
         setAuth(true);
+
+        // 🟢 Salva o token FCM do técnico também
+          if (tecnico?.Id && tokenFCM) {
+            try {
+              await apiPatch('/api/v2/tables/mpyestriqe5a1kc/records', {
+                Id: tecnico.Id,
+                token_fcm: tokenFCM
+              });
+            } catch (err) {
+              console.error('Erro ao salvar token FCM do técnico:', err);
+            }
+          }
+
+
+
         setTimeout(() => {
           navigate('/tecnico');
         }, 50);
