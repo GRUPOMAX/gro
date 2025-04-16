@@ -21,17 +21,21 @@ export const solicitarPermissaoENotificar = async () => {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') throw new Error('Permissão negada');
 
+    // 🔥 Registra o Service Worker corretamente
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
     const token = await getToken(messaging, {
-        vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
+      vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4',
+      serviceWorkerRegistration: registration
     });
 
     console.log('🔐 Token FCM:', token);
-    // Aqui você pode enviar esse token para seu backend via fetch
     return token;
   } catch (err) {
     console.error('❌ Erro ao obter permissão/token:', err);
   }
 };
+
 
 
 export { messaging }
