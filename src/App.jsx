@@ -89,30 +89,45 @@ function App() {
 
   // Mostrar toast com notificações recebidas
   useEffect(() => {
-    const unsubscribe = onMessage(messaging, (payload) => {
-      const { title, body } = payload?.notification || {}
+    const unsubscribe = onMessage(messaging, async (payload) => {
+      try {
+        const tokenAtual = await getToken(messaging, {
+          vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
+        });
   
-      // 👉 1. Mostra um toast bonito
-      toast({
-        title: title || '🔔 Nova notificação',
-        description: body || 'Você recebeu uma mensagem.',
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-        position: 'top-right',
-      })
+        const tokenDoUsuario = localStorage.getItem('token_do_celular') || localStorage.getItem('token_fcm');
   
-      // 👉 2. Mostra notificação do sistema (notificação nativa)
-      if (Notification.permission === 'granted') {
-        new Notification(title || '🔔 Nova notificação', {
-          body: body || 'Você recebeu uma mensagem.',
-          icon: '/logo.png', // ✅ opcional: substitua por seu logo (deixe no public/)
+        if (tokenAtual !== tokenDoUsuario) {
+          console.warn('🔇 Notificação ignorada por não ser deste dispositivo.');
+          return;
+        }
+  
+        const { title, body } = payload?.notification || {}
+  
+        toast({
+          title: title || '🔔 Nova notificação',
+          description: body || 'Você recebeu uma mensagem.',
+          status: 'info',
+          duration: 5000,
+          isClosable: true,
+          position: 'top-right',
         })
+  
+        if (Notification.permission === 'granted') {
+          new Notification(title || '🔔 Nova notificação', {
+            body: body || 'Você recebeu uma mensagem.',
+            icon: '/logo.png',
+          })
+        }
+  
+      } catch (err) {
+        console.error('Erro ao validar token do dispositivo:', err);
       }
     })
   
     return () => unsubscribe()
   }, [toast])
+  
   
 
 
