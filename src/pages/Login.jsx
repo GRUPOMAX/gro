@@ -138,10 +138,13 @@ function Login({ setAuth }) {
           console.log('📦 Tokens finais salvos:', tokens);
 
         
-          await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', {
-            Id: user.Id,
-            tokens_fcm: JSON.stringify(tokens)
-          });
+          await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', [
+            {
+              Id: user.Id,
+              tokens_fcm: JSON.stringify(tokens)
+            }
+          ]);
+          
         }
         
         
