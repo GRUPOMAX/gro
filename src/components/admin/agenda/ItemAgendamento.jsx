@@ -67,6 +67,7 @@ function ItemAgendamento({ ordem }) {
             isOpen={isOpen}
             onClose={onClose}
             ordemId={ordemAtual.UnicID_OS}
+            UnicID_Empresa={ordemAtual.UnicID_Empresa} // 👈 ADICIONA ISSO
             onAgendado={(novaOrdem) => setOrdemAtual(novaOrdem)} // 👍 está correto
           />
 

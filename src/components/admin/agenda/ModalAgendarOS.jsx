@@ -4,7 +4,7 @@ import { apiGet, apiPatch } from '../../../services/api' // Ajusta se seu caminh
 import { getToken } from 'firebase/messaging'
 import { messaging } from '../../../firebase' // ajuste o caminho se necessário
 
-function ModalAgendarOS({ isOpen, onClose, ordemId }) {
+function ModalAgendarOS({ isOpen, onClose, ordemId, UnicID_Empresa, onAgendado }) {
   const [tecnicos, setTecnicos] = useState([])
   const [tecnicoSelecionado, setTecnicoSelecionado] = useState('')
   const [nomeTecnicoSelecionado, setNomeTecnicoSelecionado] = useState('')
@@ -12,6 +12,8 @@ function ModalAgendarOS({ isOpen, onClose, ordemId }) {
   const [qualquerHorario, setQualquerHorario] = useState(false)
   const toast = useToast()
   const [loading, setLoading] = useState(false)
+  const empresaUnicId = UnicID_Empresa;
+
 
 
 
@@ -52,8 +54,6 @@ function ModalAgendarOS({ isOpen, onClose, ordemId }) {
   
               return {
                 ...os,
-                ID_Tecnico_Responsavel: tecnicoSelecionado,
-                Tecnico_Responsavel: nomeTecnicoSelecionado,
                 Data_Agendamento_OS: new Date().toISOString(),
                 Horario_Agendamento_OS: qualquerHorario ? null : horario,
                 Status_OS: 'Agendada'
@@ -96,85 +96,67 @@ function ModalAgendarOS({ isOpen, onClose, ordemId }) {
   
       await apiPatch('/api/v2/tables/mtnh21kq153to8h/records', payload);
   
-      // 🔔 Notificação
-      const tecnico = tecnicos.find(t => t.ID_Tecnico_Responsavel === tecnicoSelecionado);
-      const tecnicoUnicId = tecnico?.UnicID;
+      // 🔔 Notificação SOMENTE PARA EMPRESA
+      console.log('🔍 UnicID da empresa:', UnicID_Empresa);
   
-      const empresaUnicId = localStorage.getItem('UnicID');
-      const dadosEmpresa = empresaUnicId
-        ? await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${encodeURIComponent(`(UnicID,eq,${empresaUnicId})`)}`)
-        : null;
-  
-      const empresaData = dadosEmpresa?.list?.[0];
-      const tokenEmpresa = [empresaData?.token_fcm, empresaData?.token_do_celular].filter(Boolean);
-      const tokenTecnico = [tecnico?.token_fcm, tecnico?.token_do_celular].filter(Boolean);
-  
-      const mensagemAgendada = `Você recebeu uma nova ordem para ${horario ? new Date(horario).toLocaleString('pt-BR') : 'qualquer horário'}`;
-  
-      const tokenAtual = await getToken(messaging, {
-        vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
-      });
-  
-      if (tecnicoUnicId) {
-        const payloadTecnico = {
-          id: tecnicoUnicId,
-          tipo: 'tecnico',
-          titulo: '📅 Nova Ordem Agendada',
-          mensagem: mensagemAgendada,
-          novoToken: tokenAtual
-        };
-      
-        console.log('📦 Enviando payload para técnico:', payloadTecnico);
-      
-        await fetch('http://127.0.0.1:33003/notificar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payloadTecnico)
-        });
-      }
-      
       if (empresaUnicId) {
-        const payloadEmpresa = {
-          id: empresaUnicId,
-          tipo: 'empresa',
-          titulo: '📅 Ordem Agendada com Técnico',
-          mensagem: `Sua ordem foi agendada com ${nomeTecnicoSelecionado}.`,
-          novoToken: tokenAtual
-        };
-      
-        console.log('📦 Enviando payload para empresa:', payloadEmpresa);
-      
-        await fetch('http://127.0.0.1:33003/notificar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payloadEmpresa)
-        });
-      }
-
-
-        // Atualizar a ordem visualmente no componente pai
-        if (typeof onAgendado === 'function') {
-          const novaOrdemAtualizada = novaListaEmpresas
-            .flatMap(emp => emp.Ordens_de_Servico)
-            .find(os => os.UnicID_OS === ordemId);
-
-          if (novaOrdemAtualizada) {
-            onAgendado(novaOrdemAtualizada);
+        const dadosEmpresa = await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${encodeURIComponent(`(UnicID,eq,${empresaUnicId})`)}`);
+        const empresaData = dadosEmpresa?.list?.[0];
+  
+        if (!empresaData) {
+          console.warn('⚠️ Empresa não encontrada pelo UnicID');
+        } else {
+          const tokenEmpresa = [empresaData?.token_fcm, empresaData?.token_do_celular].filter(Boolean);
+  
+          const tokenAtual = await getToken(messaging, {
+            vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
+          });
+  
+          const payloadEmpresa = {
+            id: empresaUnicId,
+            tipo: 'empresa',
+            titulo: '📅 Ordem Agendada com Sucesso',
+            mensagem: `Sua ordem foi agendada para ${horario ? new Date(horario).toLocaleString('pt-BR') : 'qualquer horário'}.`,
+            novoToken: tokenAtual
+          };
+          
+  
+          console.log('📦 Enviando payload para empresa:', payloadEmpresa);
+  
+          try {
+            const resp = await fetch('http://127.0.0.1:33003/notificar', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payloadEmpresa)
+            });
+  
+            const result = await resp.json();
+            console.log('🔁 RESPOSTA BACKEND EMPRESA:', result);
+          } catch (err) {
+            console.error('❌ ERRO AO ENVIAR NOTIFICAÇÃO PARA EMPRESA:', err);
           }
         }
-      
+      }
+  
+      // Atualizar visual
+      if (typeof onAgendado === 'function') {
+        const novaOrdemAtualizada = novaListaEmpresas
+          .flatMap(emp => emp.Ordens_de_Servico)
+          .find(os => os.UnicID_OS === ordemId);
+  
+        if (novaOrdemAtualizada) {
+          onAgendado(novaOrdemAtualizada);
+        }
+      }
   
       toast({
-        title: '📨 Notificações enviadas com sucesso!',
+        title: '📨 Ordem agendada com sucesso!',
         status: 'success',
         duration: 4000,
         isClosable: true
       });
-
-
-
   
-      onClose(); // ✅ Aqui está no lugar certo!
+      onClose();
   
     } catch (error) {
       console.error('❌ Erro ao agendar ou notificar:', error);
@@ -189,6 +171,7 @@ function ModalAgendarOS({ isOpen, onClose, ordemId }) {
       setLoading(false);
     }
   };
+  
   
         
   

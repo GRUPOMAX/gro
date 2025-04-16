@@ -111,14 +111,23 @@ function Login({ setAuth }) {
         setAuth(true);
 
         // 🟢 Salva o token FCM no campo `token_fcm` da empresa (se tiver token válido)
-        const tokenJaExiste = user.token_fcm === tokenFCM || user.token_do_celular === tokenFCM;
+        let tokens = [];
 
-        if (!tokenJaExiste) {
+        try {
+          tokens = JSON.parse(user.tokens_fcm || '[]');
+        } catch {
+          tokens = [];
+        }
+        
+        if (!tokens.includes(tokenFCM)) {
+          tokens.push(tokenFCM);
+        
           await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', {
             Id: user.Id,
-            [campoToken]: tokenFCM
+            tokens_fcm: JSON.stringify(tokens)
           });
         }
+        
         
         
         // ⏱️ Redireciona após login
