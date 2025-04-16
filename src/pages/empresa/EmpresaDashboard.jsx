@@ -67,7 +67,7 @@ function EmpresaDashboard() {
           agendadas: minhasOrdens.filter(o => o.Status_OS === 'Agendada').length,
           execucao: minhasOrdens.filter(o => o.Status_OS === 'Execução').length,
           canceladas: minhasOrdens.filter(o => o.Status_OS === 'Cancelado').length,
-          pendenciadas: minhasOrdens.filter(o => o.Status_OS === 'Pendente').length,
+          pendenciadas: minhasOrdens.filter(o => ['pendente', 'pendenciada'].includes(o.Status_OS?.toLowerCase())).length,
           finalizadas: minhasOrdens.filter(o => o.Status_OS === 'Finalizado').length,
           improdutivas: minhasOrdens.filter(o => ['improdutivo', 'improdutivos'].includes(o.Status_OS?.toLowerCase())).length,
         }
