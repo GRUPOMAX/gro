@@ -117,7 +117,15 @@ function Login({ setAuth }) {
           // 🔁 Busca versão mais atualizada diretamente da tabela (em caso de múltiplos logins simultâneos)
           const latest = await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${encodeURIComponent(`(Id,eq,${user.Id})`)}`);
           const empresaAtualizada = latest.list?.[0];
-          tokens = JSON.parse(empresaAtualizada?.tokens_fcm || '[]');
+          let parsedTokens;
+          try {
+            parsedTokens = JSON.parse(empresaAtualizada?.tokens_fcm || '[]');
+            if (!Array.isArray(parsedTokens)) parsedTokens = [parsedTokens];
+          } catch {
+            parsedTokens = [];
+          }
+          tokens = parsedTokens;
+          
         } catch {
           tokens = [];
         }
