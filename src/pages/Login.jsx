@@ -46,6 +46,13 @@ function Login({ setAuth }) {
     gerarToken();
   }, []);
 
+
+  function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  }
+  const campoToken = isMobileDevice() ? 'token_do_celular' : 'token_fcm';
+
+
   // Seu useEffect de typing (SGO)
   useEffect(() => {
     let index = 0;
@@ -104,16 +111,15 @@ function Login({ setAuth }) {
         setAuth(true);
 
         // 🟢 Salva o token FCM no campo `token_fcm` da empresa (se tiver token válido)
-        if (user?.Id && tokenFCM) {
-          try {
-            await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', {
-              Id: user.Id,
-              token_fcm: tokenFCM
-            });
-          } catch (err) {
-            console.error('❌ Erro ao salvar token FCM no NocoDB:', err);
-          }
+        const tokenJaExiste = user.token_fcm === tokenFCM || user.token_do_celular === tokenFCM;
+
+        if (!tokenJaExiste) {
+          await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', {
+            Id: user.Id,
+            [campoToken]: tokenFCM
+          });
         }
+        
         
         // ⏱️ Redireciona após login
         setTimeout(() => {
@@ -143,18 +149,14 @@ function Login({ setAuth }) {
 
         setAuth(true);
 
-        // 🟢 Salva o token FCM do técnico também
-          if (tecnico?.Id && tokenFCM) {
-            try {
-              await apiPatch('/api/v2/tables/mpyestriqe5a1kc/records', {
-                Id: tecnico.Id,
-                token_fcm: tokenFCM
-              });
-            } catch (err) {
-              console.error('Erro ao salvar token FCM do técnico:', err);
-            }
-          }
+        const tokenJaExiste = tecnico.token_fcm === tokenFCM || tecnico.token_do_celular === tokenFCM;
 
+        if (!tokenJaExiste) {
+          await apiPatch('/api/v2/tables/mpyestriqe5a1kc/records', {
+            Id: tecnico.Id,
+            [campoToken]: tokenFCM
+          });
+        }
 
 
         setTimeout(() => {
