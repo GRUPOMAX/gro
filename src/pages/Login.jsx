@@ -114,13 +114,21 @@ function Login({ setAuth }) {
         let tokens = [];
 
         try {
-          tokens = JSON.parse(user.tokens_fcm || '[]');
+          // 🔁 Busca versão mais atualizada diretamente da tabela (em caso de múltiplos logins simultâneos)
+          const latest = await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${encodeURIComponent(`(Id,eq,${user.Id})`)}`);
+          const empresaAtualizada = latest.list?.[0];
+          tokens = JSON.parse(empresaAtualizada?.tokens_fcm || '[]');
         } catch {
           tokens = [];
         }
         
+        
         if (!tokens.includes(tokenFCM)) {
           tokens.push(tokenFCM);
+
+          console.log('📱 Token gerado:', tokenFCM);
+          console.log('📦 Tokens finais salvos:', tokens);
+
         
           await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', {
             Id: user.Id,
