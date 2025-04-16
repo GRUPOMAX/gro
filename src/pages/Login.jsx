@@ -23,6 +23,7 @@ function Login({ setAuth }) {
   const [mobile, setMobile] = useState(isMobile());
   const [tokenFCM, setTokenFCM] = useState('');
 
+
   const fullText = 'SGO';
   const toast = useToast();
   const navigate = useNavigate();
@@ -33,9 +34,13 @@ function Login({ setAuth }) {
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
+          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  
           const token = await getToken(messaging, {
-            vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
+            vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4',
+            serviceWorkerRegistration: registration
           });
+  
           setTokenFCM(token);
         }
       } catch (error) {
@@ -45,6 +50,7 @@ function Login({ setAuth }) {
   
     gerarToken();
   }, []);
+  
 
   // Seu useEffect de typing (SGO)
   useEffect(() => {
@@ -58,6 +64,14 @@ function Login({ setAuth }) {
     }, 300);
     return () => clearInterval(interval);
   }, []);
+
+  function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  }
+
+  const campoToken = isMobileDevice() ? 'token_do_celular' : 'token_fcm'
+
+  
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -103,17 +117,22 @@ function Login({ setAuth }) {
 
         setAuth(true);
 
-        // 🟢 Salva o token FCM no campo `token_fcm` da empresa (se tiver token válido)
-        if (user?.Id && tokenFCM) {
-          try {
-            await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', {
-              Id: user.Id,
-              token_fcm: tokenFCM
-            });
-          } catch (err) {
-            console.error('❌ Erro ao salvar token FCM no NocoDB:', err);
+          // 🟢 Salva o token FCM no campo correto, evitando duplicação
+          if (user?.Id && tokenFCM) {
+            const tokenJaExiste = user.token_fcm === tokenFCM || user.token_do_celular === tokenFCM;
+
+            if (!tokenJaExiste) {
+              try {
+                await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', {
+                  Id: user.Id,
+                  [campoToken]: tokenFCM
+                });
+              } catch (err) {
+                console.error(`❌ Erro ao salvar ${campoToken}:`, err);
+              }
+            }
           }
-        }
+
         
         // ⏱️ Redireciona após login
         setTimeout(() => {
@@ -143,17 +162,21 @@ function Login({ setAuth }) {
 
         setAuth(true);
 
-        // 🟢 Salva o token FCM do técnico também
-          if (tecnico?.Id && tokenFCM) {
+        // 🟢 Salva o token FCM do técnico também, evitando duplicação
+        if (tecnico?.Id && tokenFCM) {
+          const tokenJaExiste = tecnico.token_fcm === tokenFCM || tecnico.token_do_celular === tokenFCM;
+
+          if (!tokenJaExiste) {
             try {
               await apiPatch('/api/v2/tables/mpyestriqe5a1kc/records', {
                 Id: tecnico.Id,
-                token_fcm: tokenFCM
+                [campoToken]: tokenFCM
               });
             } catch (err) {
-              console.error('Erro ao salvar token FCM do técnico:', err);
+              console.error(`❌ Erro ao salvar ${campoToken} do técnico:`, err);
             }
           }
+        }
 
 
 
