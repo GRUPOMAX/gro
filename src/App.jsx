@@ -69,6 +69,9 @@ import RedefinirSenha from './pages/RedefinirSenha';
 
 import { solicitarPermissaoENotificar } from './firebase' // <- já criamos no firebase.js
 
+import { useToast } from '@chakra-ui/react'
+import { onMessage } from 'firebase/messaging'
+import { messaging } from './firebase'
 
 
 
@@ -77,6 +80,40 @@ function App() {
   const [auth, setAuth] = useState(false)
   const [tipo, setTipo] = useState(null)
   const [loading, setLoading] = useState(true)
+
+
+
+
+
+  const toast = useToast()
+
+  // Mostrar toast com notificações recebidas
+  useEffect(() => {
+    const unsubscribe = onMessage(messaging, (payload) => {
+      const { title, body } = payload?.notification || {}
+  
+      // 👉 1. Mostra um toast bonito
+      toast({
+        title: title || '🔔 Nova notificação',
+        description: body || 'Você recebeu uma mensagem.',
+        status: 'info',
+        duration: 5000,
+        isClosable: true,
+        position: 'top-right',
+      })
+  
+      // 👉 2. Mostra notificação do sistema (notificação nativa)
+      if (Notification.permission === 'granted') {
+        new Notification(title || '🔔 Nova notificação', {
+          body: body || 'Você recebeu uma mensagem.',
+          icon: '/logo.png', // ✅ opcional: substitua por seu logo (deixe no public/)
+        })
+      }
+    })
+  
+    return () => unsubscribe()
+  }, [toast])
+  
 
 
 

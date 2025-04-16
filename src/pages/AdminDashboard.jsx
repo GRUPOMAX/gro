@@ -21,6 +21,7 @@ import ResumoEstatisticas from '../components/admin/ResumoEstatisticas'
 import ListaOrdensExecucao from '../components/admin/ListaOrdensExecucao'
 import UltimasOrdens from '../components/admin/UltimasOrdens'
 import AgenteIAFlutuante from '../components/admin/AgenteIAFlutuante' // 👈 importa certinho!
+import BotaoEnviarNotificacaoDev from '../components/admin/BotaoEnviarNotificacaoDev'
 
 
 function AdminDashboard({ setAuth }) {
@@ -88,6 +89,7 @@ function AdminDashboard({ setAuth }) {
           <ListaOrdensExecucao />
           <UltimasOrdens />
         </VStack>
+        <BotaoEnviarNotificacaoDev />
 
         {/* Só renderiza o Agente se já carregou os dados */}
         {dadosEmpresas && (

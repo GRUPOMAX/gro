@@ -38,4 +38,9 @@ export { messaging }
 // Escuta notificações com o app aberto
 onMessage(messaging, (payload) => {
   console.log('📨 Notificação recebida:', payload);
+
+  // 🔥 Chama a função global se estiver definida
+  if (typeof window.mostrarToastNotificacao === 'function') {
+    window.mostrarToastNotificacao(payload);
+  }
 });
