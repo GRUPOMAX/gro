@@ -110,43 +110,48 @@ function Login({ setAuth }) {
 
         setAuth(true);
 
-        // 🟢 Salva o token FCM no campo `token_fcm` da empresa (se tiver token válido)
+// 🟢 Salva o token FCM no campo `tokens_fcm` da empresa (como array JSON de strings reais)
         let tokens = [];
 
         try {
-          // 🔁 Busca versão mais atualizada diretamente da tabela (em caso de múltiplos logins simultâneos)
+          // 🔁 Puxa a versão mais atualizada do registro
           const latest = await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${encodeURIComponent(`(Id,eq,${user.Id})`)}`);
           const empresaAtualizada = latest.list?.[0];
-          let parsedTokens;
-          try {
-            parsedTokens = JSON.parse(empresaAtualizada?.tokens_fcm || '[]');
-            if (!Array.isArray(parsedTokens)) parsedTokens = [parsedTokens];
-          } catch {
-            parsedTokens = [];
+
+          // 🧠 Tenta ler corretamente o campo tokens_fcm como array
+          const raw = empresaAtualizada?.tokens_fcm;
+          if (Array.isArray(raw)) {
+            tokens = raw;
+          } else if (typeof raw === 'string') {
+            try {
+              const parsed = JSON.parse(raw);
+              tokens = Array.isArray(parsed) ? parsed : [parsed];
+            } catch {
+              tokens = [];
+            }
           }
-          tokens = parsedTokens;
-          
         } catch {
           tokens = [];
         }
+
+        const baseId = tokenFCM?.split(':')[0];
+        const tokenJaExiste = tokens.some(t => t.startsWith(baseId + ':'));
         
-        
-        if (!tokens.includes(tokenFCM)) {
+        if (tokenFCM && !tokenJaExiste) {
           tokens.push(tokenFCM);
-
-          console.log('📱 Token gerado:', tokenFCM);
-          console.log('📦 Tokens finais salvos:', tokens);
-
+        
+          console.log('📱 Novo token:', tokenFCM);
+          console.log('📦 Tokens finais (sem duplicados por baseId):', tokens);
         
           await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', [
             {
               Id: user.Id,
-              tokens_fcm: tokens // SEM JSON.stringify!
+              tokens_fcm: tokens
             }
           ]);
-          
-          
         }
+
+
         
         
         
