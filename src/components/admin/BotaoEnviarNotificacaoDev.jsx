@@ -59,39 +59,42 @@ function BotaoEnviarNotificacaoDev() {
     }
   }, [tipo, mostrar])
 
-  const enviarNotificacao = async () => {
-    if (!idSelecionado || !titulo || !mensagem) {
-      toast({ title: 'Preencha todos os campos.', status: 'error' })
-      return
-    }
-  
-    try {
-      const novoToken = await getToken(messaging, {
-        vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
-      })
-  
-      const res = await fetch('http://localhost:33003/notificar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: idSelecionado, tipo, titulo, mensagem, novoToken }) // 🔥 envia token
-      })
-  
-      const data = await res.json()
-  
-      if (data.sucesso) {
-        toast({ title: 'Notificação enviada!', status: 'success' })
-        onClose()
-        setTitulo('')
-        setMensagem('')
-        setIdSelecionado('')
-      } else {
-        toast({ title: 'Erro ao enviar', description: data.erro, status: 'error' })
-      }
-    } catch (err) {
-      console.error('Erro no envio:', err)
-      toast({ title: 'Erro no servidor', status: 'error' })
-    }
+// Envie `novoToken` apenas para dispositivos que ainda não salvaram token
+const enviarNotificacao = async () => {
+  if (!idSelecionado || !titulo || !mensagem) {
+    toast({ title: 'Preencha todos os campos.', status: 'error' })
+    return
   }
+
+  try {
+    const tokenAtual = await getToken(messaging, {
+      vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
+    });
+
+    // ✅ O backend já evita duplicatas, mas você pode omitir `novoToken` se não quiser que ele atualize sempre.
+    const res = await fetch('http://localhost:33003/notificar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: idSelecionado, tipo, titulo, mensagem, novoToken: tokenAtual }) // pode remover esse campo se quiser evitar atualização
+    });
+
+    const data = await res.json();
+
+    if (data.sucesso) {
+      toast({ title: 'Notificação enviada!', status: 'success' });
+      onClose();
+      setTitulo('');
+      setMensagem('');
+      setIdSelecionado('');
+    } else {
+      toast({ title: 'Erro ao enviar', description: data.erro, status: 'error' });
+    }
+  } catch (err) {
+    console.error('Erro no envio:', err);
+    toast({ title: 'Erro no servidor', status: 'error' });
+  }
+};
+
   
 
   if (!mostrar) return null

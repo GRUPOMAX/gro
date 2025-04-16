@@ -64,11 +64,12 @@ function ItemAgendamento({ ordem }) {
 
       {/* Modal de Agendamento */}
       <ModalAgendarOS
-        isOpen={isOpen}
-        onClose={onClose}
-        ordemId={ordemAtual.UnicID_OS}
-        onAgendado={(novaOrdem) => setOrdemAtual(novaOrdem)}
-      />
+            isOpen={isOpen}
+            onClose={onClose}
+            ordemId={ordemAtual.UnicID_OS}
+            onAgendado={(novaOrdem) => setOrdemAtual(novaOrdem)} // 👍 está correto
+          />
+
     </Box>
   )
 }
