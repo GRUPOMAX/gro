@@ -141,9 +141,10 @@ function Login({ setAuth }) {
           await apiPatch('/api/v2/tables/mga2sghx95o3ssp/records', [
             {
               Id: user.Id,
-              tokens_fcm: JSON.stringify(tokens)
+              tokens_fcm: tokens // SEM JSON.stringify!
             }
           ]);
+          
           
         }
         
