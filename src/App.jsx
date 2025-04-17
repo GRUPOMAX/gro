@@ -88,31 +88,34 @@ function App() {
   const toast = useToast()
 
   // Mostrar toast com notificações recebidas
-  useEffect(() => {
-    const unsubscribe = onMessage(messaging, (payload) => {
-      const { title, body } = payload?.notification || {}
-  
-      // 👉 1. Mostra um toast bonito
-      toast({
-        title: title || '🔔 Nova notificação',
-        description: body || 'Você recebeu uma mensagem.',
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-        position: 'top-right',
-      })
-  
-      // 👉 2. Mostra notificação do sistema (notificação nativa)
-      if (Notification.permission === 'granted') {
-        new Notification(title || '🔔 Nova notificação', {
-          body: body || 'Você recebeu uma mensagem.',
-          icon: '/logo.png', // ✅ opcional: substitua por seu logo (deixe no public/)
+    // ✅ Mostrar notificação sem duplicar em mobile
+    useEffect(() => {
+      const unsubscribe = onMessage(messaging, (payload) => {
+        const { title, body } = payload?.notification || {}
+
+        // 👉 Toast sempre
+        toast({
+          title: title || '🔔 Nova notificação',
+          description: body || 'Você recebeu uma mensagem.',
+          status: 'info',
+          duration: 5000,
+          isClosable: true,
+          position: 'top-right',
         })
-      }
-    })
-  
-    return () => unsubscribe()
-  }, [toast])
+
+        // ✅ Evitar notificação duplicada no mobile
+        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent)
+        if (!isMobile && Notification.permission === 'granted') {
+          new Notification(title || '🔔 Nova notificação', {
+            body: body || 'Você recebeu uma mensagem.',
+            icon: '/logo.png',
+          })
+        }
+      })
+
+      return () => unsubscribe()
+    }, [toast])
+
   
 
 
