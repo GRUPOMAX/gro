@@ -10,12 +10,49 @@ import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/admin/AdminBottomNav'
 import { usarVerificacaoLimiteOS } from '../../components/utils/verificarLimiteOS'
 
+import { getToken } from 'firebase/messaging'
+import { messaging } from '../../firebase'
+import { apiGet, apiPatch } from '../../services/api'
+
+
 export default function PerfilEmpresaPage() {
   const navigate = useNavigate()
   const { isOpen, onOpen, onClose } = useDisclosure()
   const handleNovaOS = usarVerificacaoLimiteOS(navigate, onOpen)
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const unicId = localStorage.getItem('UnicID')
+      const tokenAtual = await getToken(messaging, {
+        vapidKey: 'BPPTQNhpSdolM8HR4qNPxNvlKB3gPfcps0u2AjZTdN6t-rrwpJU9lgq0sE-_OHbqV_aWeQKcNGUzM42oi1XOXh4'
+      })
+  
+      if (unicId && tokenAtual) {
+        const filtro = encodeURIComponent(`(UnicID,eq,${unicId})`)
+        const res = await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${filtro}`)
+        const empresa = res?.list?.[0]
+  
+        if (empresa) {
+          const recordId = empresa.Id
+          const tokensSalvos = Array.isArray(empresa.tokens_fcm)
+            ? empresa.tokens_fcm
+            : JSON.parse(empresa.tokens_fcm || '[]')
+  
+          const novosTokens = tokensSalvos.filter(t => t !== tokenAtual)
+  
+          await apiPatch(`/api/v2/tables/mga2sghx95o3ssp/records`, {
+            Id: recordId,
+            tokens_fcm: JSON.stringify(novosTokens)
+          })
+  
+          console.log('✅ Token do dispositivo removido com sucesso!')
+        }
+      }
+    } catch (err) {
+      console.error('⚠️ Erro ao remover token FCM:', err)
+    }
+  
+    // Limpa storage e redireciona
     localStorage.clear()
     navigate('/login')
   }

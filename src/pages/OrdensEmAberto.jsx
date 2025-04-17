@@ -160,6 +160,46 @@ function OrdensEmAberto() {
         Id: registro.Id,
         'Ordem de Serviços': novaEstrutura
       })
+        // 🔔 Envia notificação
+        const dadosEmpresa = await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${encodeURIComponent(`(UnicID,eq,${ordemSelecionada.UnicID_Empresa})`)}`);
+        const empresa = dadosEmpresa?.list?.[0];
+
+        if (empresa && empresa.tokens_fcm) {
+          let tokens = [];
+          try {
+            if (empresa.tokens_fcm?.startsWith?.('[')) {
+              const parsed = JSON.parse(empresa.tokens_fcm);
+              if (Array.isArray(parsed)) tokens = parsed.filter(Boolean);
+            } else {
+              tokens = [empresa.tokens_fcm].filter(Boolean);
+            }
+          } catch (err) {
+            console.warn('Erro ao ler tokens da empresa:', err);
+          }
+
+          if (tokens.length > 0) {
+            const payload = {
+              id: empresa.UnicID,
+              tipo: 'empresa',
+              titulo: '⚠️ Status da O.S atualizado!',
+              mensagem: `O status da sua ordem foi alterado para: ${novoStatus}`,
+              tokens
+            };
+
+            console.log('📦 Enviando notificação após mudança de status:', payload);
+
+            try {
+              await fetch('http://localhost:33003/notificar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+            } catch (err) {
+              console.error('❌ Erro ao enviar notificação de status:', err);
+            }
+          }
+        }
+
   
       toast({
         title: 'Ordem salva no banco!',
