@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Box, Heading, Select, Spinner, SimpleGrid, Text, useBreakpointValue, Badge
+  Box,
+  Heading,
+  Select,
+  Spinner,
+  SimpleGrid,
+  Text,
+  useBreakpointValue,
+  Badge,
+  useColorModeValue,
 } from '@chakra-ui/react'
 import { Settings } from 'lucide-react'
 import { apiGet } from '../services/api'
@@ -16,6 +24,15 @@ function OrdensEmExecucao() {
   const isMobile = useBreakpointValue({ base: true, md: false })
   const navigate = useNavigate()
 
+  // color‑mode tokens
+  const pageBg       = useColorModeValue('gray.50', 'gray.800')
+  const cardBg       = useColorModeValue('white',   'gray.700')
+  const borderClr    = useColorModeValue('gray.200','gray.600')
+  const hoverBg      = useColorModeValue('gray.100','gray.600')
+  const selectBg     = useColorModeValue('white',   'gray.600')
+  const selectBorder = useColorModeValue('gray.300','gray.500')
+  const textColor    = useColorModeValue('gray.800','gray.100')
+
   useEffect(() => {
     const fetchDados = async () => {
       try {
@@ -26,7 +43,7 @@ function OrdensEmExecucao() {
 
         const listaTecnicos = tecnicosRes.list.map(t => ({
           nome: t.Tecnico_Responsavel,
-          id: t.ID_Tecnico_Responsavel
+          id:   t.ID_Tecnico_Responsavel
         }))
         setTecnicos(listaTecnicos)
 
@@ -58,12 +75,7 @@ function OrdensEmExecucao() {
     ? ordens.filter(os => os.ID_Tecnico_Responsavel === tecnicoSelecionado)
     : ordens
 
-  // CSS de rotação
-  const spinning = {
-    animation: 'spin 1s linear infinite'
-  }
-
-  // Aplica o keyframe globalmente uma vez
+  // spinning icon keyframe
   useEffect(() => {
     const keyframes = `
       @keyframes spin {
@@ -78,23 +90,33 @@ function OrdensEmExecucao() {
     return () => document.head.removeChild(styleSheet)
   }, [])
 
+  const spinning = { animation: 'spin 1s linear infinite' }
+
   return (
-    <Box display="flex">
+    <Box display="flex" bg={pageBg} color={textColor}>
       {!isMobile && <AdminSidebarDesktop />}
       {isMobile && <AdminMobileMenu />}
       {isMobile && <AdminBottomNav />}
 
       <Box
-            ml={!isMobile ? '250px' : 0}
-            p={6}
-            minH="100vh"
-            pb={isMobile ? '100px' : '0'} // 👈 adiciona paddingBottom no mobile
-          >
+        ml={!isMobile ? '250px' : 0}
+        p={6}
+        minH="100vh"
+        pb={isMobile ? '100px' : 0}
+      >
         <Heading size="lg" mb={4}>📋 Ordens em Execução</Heading>
 
-        <Select placeholder="Filtrar por Técnico" mb={4} onChange={e => setTecnicoSelecionado(e.target.value)}>
+        <Select
+          placeholder="Filtrar por Técnico"
+          mb={4}
+          bg={selectBg}
+          borderColor={selectBorder}
+          onChange={e => setTecnicoSelecionado(e.target.value)}
+        >
           {tecnicos.map(tecnico => (
-            <option key={tecnico.id} value={tecnico.id}>{tecnico.nome}</option>
+            <option key={tecnico.id} value={tecnico.id}>
+              {tecnico.nome}
+            </option>
           ))}
         </Select>
 
@@ -103,52 +125,45 @@ function OrdensEmExecucao() {
         ) : (
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             {ordensFiltradas.map((os, i) => (
-                <Box
-                    key={i}
-                    onClick={() => navigate(`/admin/ordem-execucao/${os.UnicID_OS}`)}
-                    cursor="pointer"
-                    _hover={{ bg: 'gray.100' }}
-                    p={4}
-                    borderWidth="1px"
-                    borderRadius="md"
-                    boxShadow="sm"
-                    bg="gray.50"
-                    position="relative" // <-- AQUI
-                    >
+              <Box
+                key={i}
+                onClick={() => navigate(`/admin/ordem-execucao/${os.UnicID_OS}`)}
+                cursor="pointer"
+                _hover={{ bg: hoverBg }}
+                p={4}
+                borderWidth="1px"
+                borderColor={borderClr}
+                borderRadius="md"
+                boxShadow="sm"
+                bg={cardBg}
+                position="relative"
+              >
                 <Box position="absolute" top={2} right={2}>
                   <Settings size={20} style={spinning} color="green" />
                 </Box>
                 <Text><strong>Cliente:</strong> {os.Nome_Cliente}</Text>
-                  <Text><strong>Telefone:</strong> {os.Telefone1_Cliente}</Text>
+                <Text><strong>Telefone:</strong> {os.Telefone1_Cliente}</Text>
 
-                  {/* Agrupando tipo da OS + tipo de cliente */}
-                  <Box mt={2}>
-                    <Text fontWeight="bold" mb={1}>Informações</Text>
-
-                    <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-                      <Badge colorScheme="blue" borderRadius="full" px={2} py={1} fontSize="xs">
-                        {os.Tipo_OS}
-                      </Badge>
-
-                      <Badge
-                        colorScheme={
-                          os.TipoCliente === 'Empresarial' ? 'blue'
-                          : os.TipoCliente === 'Residencial' ? 'green'
-                          : 'gray'
-                        }
-                        fontSize="0.7em"
-                        p={1}
-                        rounded="md"
-                      >
-                        {os.TipoCliente || 'Tipo não informado'}
-                      </Badge>
-                    </Box>
+                <Box mt={2}>
+                  <Text fontWeight="bold" mb={1}>Informações</Text>
+                  <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+                    <Badge colorScheme="blue" borderRadius="full" px={2} py={1} fontSize="xs">
+                      {os.Tipo_OS}
+                    </Badge>
+                    <Badge
+                      colorScheme={os.TipoCliente === 'Empresarial' ? 'blue' : 'green'}
+                      fontSize="0.7em"
+                      p={1}
+                      rounded="md"
+                    >
+                      {os.TipoCliente || 'Tipo não informado'}
+                    </Badge>
                   </Box>
+                </Box>
 
-                  <Text mt={2}><strong>Endereço:</strong> {os.Endereco_Cliente}</Text>
-                  <Text><strong>Técnico:</strong> {os.Tecnico_Responsavel}</Text>
-                  <Text><strong>Empresa:</strong> {os.empresa}</Text>
-
+                <Text mt={2}><strong>Endereço:</strong> {os.Endereco_Cliente}</Text>
+                <Text><strong>Técnico:</strong> {os.Tecnico_Responsavel}</Text>
+                <Text><strong>Empresa:</strong> {os.empresa}</Text>
               </Box>
             ))}
           </SimpleGrid>

@@ -1,4 +1,4 @@
-import { Box, Text, Flex, Badge, Button } from '@chakra-ui/react'
+import { Box, Text, Flex, Badge, Button, useColorModeValue } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { useDisclosure } from '@chakra-ui/react'
 import ModalAgendarOS from './ModalAgendarOS'
@@ -7,13 +7,20 @@ function ItemAgendamento({ ordem }) {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [ordemAtual, setOrdemAtual] = useState(ordem)
 
+  // cores adaptáveis
+  const bgCard       = useColorModeValue('white',    'gray.800')
+  const borderClr    = useColorModeValue('gray.200', 'gray.600')
+  const textColor    = useColorModeValue('gray.800', 'gray.100')
+
   return (
     <Box
       p={4}
       borderWidth={1}
+      borderColor={borderClr}
       borderRadius="lg"
       w="full"
-      bg="white"
+      bg={bgCard}
+      color={textColor}
       shadow="sm"
     >
       <Flex justify="space-between" align="center" mb={2}>
@@ -21,7 +28,6 @@ function ItemAgendamento({ ordem }) {
         <Badge colorScheme="blue">{ordemAtual.Tipo_OS?.toUpperCase()}</Badge>
       </Flex>
 
-      {/* NOVO: Tipo de Cliente */}
       <Flex justify="flex-start" align="center" mb={2} gap={2}>
         <Badge
           colorScheme={
@@ -47,7 +53,7 @@ function ItemAgendamento({ ordem }) {
       </Text>
 
       <Flex justify="space-between" align="center">
-        <Text fontSize="xs" color="gray.500">
+        <Text fontSize="xs" color={useColorModeValue('gray.500','gray.400')}>
           Enviado: {new Date(ordemAtual.Data_Envio_OS).toLocaleString()}
         </Text>
 
@@ -62,16 +68,15 @@ function ItemAgendamento({ ordem }) {
         )}
       </Flex>
 
-      {/* Modal de Agendamento */}
       <ModalAgendarOS
-            isOpen={isOpen}
-            onClose={onClose}
-            ordemId={ordemAtual.UnicID_OS}
-            UnicID_Empresa={ordemAtual.UnicID_Empresa} // 👈 ADICIONA ISSO
-            onAgendado={(novaOrdem) => setOrdemAtual(novaOrdem)} // 👍 está correto
-          />
-
+        isOpen={isOpen}
+        onClose={onClose}
+        ordemId={ordemAtual.UnicID_OS}
+        UnicID_Empresa={ordemAtual.UnicID_Empresa}
+        onAgendado={novaOrdem => setOrdemAtual(novaOrdem)}
+      />
     </Box>
   )
 }
+
 export default ItemAgendamento

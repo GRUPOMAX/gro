@@ -1,5 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Box, Flex, Text, Table, Thead, Tbody, Tr, Th, Td, Spinner, useBreakpointValue, VStack, Badge } from '@chakra-ui/react'
+import {
+  Box,
+  Flex,
+  Text,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Spinner,
+  useBreakpointValue,
+  VStack,
+  Badge,
+  useColorModeValue,
+} from '@chakra-ui/react'
 import { apiGet } from '../../services/api'
 import { useNavigate } from 'react-router-dom'
 
@@ -9,36 +24,44 @@ function UltimasOrdens() {
   const isMobile = useBreakpointValue({ base: true, md: false })
   const navigate = useNavigate()
 
+  // cores adaptáveis
+  const bgCard = useColorModeValue('white', 'gray.800')
+  const hoverBg = useColorModeValue('gray.100', 'gray.700')
+  const borderClr = useColorModeValue('gray.200', 'gray.600')
+  const headingClr = useColorModeValue('gray.800', 'white')
+  const textClr = useColorModeValue('gray.700', 'gray.200')
+  const tableHeaderBg = useColorModeValue('gray.50', 'gray.700')
+  const tableHoverBg = useColorModeValue('gray.100', 'gray.600')
+
   useEffect(() => {
     const buscarOrdens = async () => {
       try {
-        const res = await apiGet('/api/v2/tables/mtnh21kq153to8h/records?limit=1')
+        const res = await apiGet(
+          '/api/v2/tables/mtnh21kq153to8h/records?limit=1'
+        )
         const registro = res.list?.[0]
-
         let listaOrdens = []
+
         if (registro && registro['Ordem de Serviços']) {
-          let jsonOrdem
-          try {
-            jsonOrdem = typeof registro['Ordem de Serviços'] === 'string'
+          const jsonOrdem =
+            typeof registro['Ordem de Serviços'] === 'string'
               ? JSON.parse(registro['Ordem de Serviços'])
               : registro['Ordem de Serviços']
 
-            const empresas = jsonOrdem.empresas || []
-            empresas.forEach(empresa => {
-              if (empresa.Ordens_de_Servico && empresa.Ordens_de_Servico.length > 0) {
-                const ordensComEmpresa = empresa.Ordens_de_Servico.map(ordem => ({
-                  ...ordem,
-                  empresa_nome: empresa.empresa || '---'
-                }))
-                listaOrdens = [...listaOrdens, ...ordensComEmpresa]
-              }
+          const empresas = jsonOrdem.empresas || []
+          empresas.forEach(empresa => {
+            const ords = empresa.Ordens_de_Servico || []
+            ords.forEach(o => {
+              listaOrdens.push({
+                ...o,
+                empresa_nome: empresa.empresa || '---',
+              })
             })
+          })
 
-            // Ordena pela data mais recente
-            listaOrdens.sort((a, b) => new Date(b.Data_Envio_OS) - new Date(a.Data_Envio_OS))
-          } catch (err) {
-            console.error('Erro ao interpretar Ordem de Serviços:', err)
-          }
+          listaOrdens.sort(
+            (a, b) => new Date(b.Data_Envio_OS) - new Date(a.Data_Envio_OS)
+          )
         }
 
         setOrdens(listaOrdens.slice(0, 10))
@@ -50,33 +73,25 @@ function UltimasOrdens() {
     }
 
     buscarOrdens()
-
-    const interval = setInterval(() => {
-      buscarOrdens()
-    }, 30000)
-
+    const interval = setInterval(buscarOrdens, 30000)
     return () => clearInterval(interval)
   }, [])
 
   function irParaDetalhe(ordem) {
-    if (!ordem || !ordem.Status_OS) return;
-  
-    const status = ordem.Status_OS.toLowerCase();
-  
+    if (!ordem?.Status_OS) return
+    const status = ordem.Status_OS.toLowerCase()
     if (status.includes('execução')) {
-      navigate(`/admin/ordem-execucao/${ordem.UnicID_OS}`);
+      navigate(`/admin/ordem-execucao/${ordem.UnicID_OS}`)
     } else if (status.includes('pendente') || status.includes('pendenciada')) {
-      navigate(`/admin/ordens-pendenciadas/${ordem.UnicID_OS}`);
+      navigate(`/admin/ordens-pendenciadas/${ordem.UnicID_OS}`)
     } else if (status.includes('finalizado')) {
-      navigate(`/admin/ordens-finalizadas/${ordem.UnicID_OS}`);
+      navigate(`/admin/ordens-finalizadas/${ordem.UnicID_OS}`)
     } else if (status.includes('improdutiva')) {
-      navigate(`/admin/ordens-improdutivas/${ordem.UnicID_OS}`);
+      navigate(`/admin/ordens-improdutivas/${ordem.UnicID_OS}`)
     } else {
-      console.warn('Status desconhecido:', ordem.Status_OS);
+      console.warn('Status desconhecido:', ordem.Status_OS)
     }
   }
-  
-
 
   if (loading) {
     return (
@@ -88,75 +103,88 @@ function UltimasOrdens() {
 
   return (
     <Box w="full" mt={10}>
-      <Text fontSize="xl" fontWeight="bold" mb={4}>Últimas Ordens de Serviço</Text>
+      <Text fontSize="xl" fontWeight="bold" mb={4} color={headingClr}>
+        Últimas Ordens de Serviço
+      </Text>
 
       {isMobile ? (
         <VStack spacing={4} align="stretch">
-          {ordens.map((ordem, index) => (
+          {ordens.length === 0 && (
+            <Text textAlign="center" color={textClr}>
+              Nenhuma ordem encontrada.
+            </Text>
+          )}
+          {ordens.map((ordem, i) => (
             <Box
-              key={index}
+              key={i}
               p={4}
-              shadow="md"
+              shadow="sm"
               borderWidth="1px"
-              borderRadius="lg"
-              bg="white"
+              borderColor={borderClr}
+              borderRadius="md"
+              bg={bgCard}
               onClick={() => irParaDetalhe(ordem)}
-              _hover={{ bg: 'gray.100', cursor: 'pointer' }}
+              _hover={{ bg: hoverBg, cursor: 'pointer' }}
             >
-
-              <Text fontWeight="bold">N° O.S.: {ordem.Numero_OS || '---'}</Text>
-              <Text><strong>Cliente:</strong> {ordem.Nome_Cliente || '---'}</Text>
-              <Text><strong>Empresa:</strong> {ordem.empresa_nome || '---'}</Text>
+              <Text fontWeight="bold" color={textClr}>
+                N° O.S.: {ordem.Numero_OS || '---'}
+              </Text>
+              <Text color={textClr}>
+                <strong>Cliente:</strong> {ordem.Nome_Cliente || '---'}
+              </Text>
+              <Text color={textClr}>
+                <strong>Empresa:</strong> {ordem.empresa_nome}
+              </Text>
               <Flex gap={2} align="center" flexWrap="wrap" mt={2}>
-              <Badge
-                colorScheme={
-                  ordem.TipoCliente === 'Empresarial' ? 'blue'
-                  : ordem.TipoCliente === 'Residencial' ? 'green'
-                  : 'gray'
-                }
-                fontSize="0.7em"
-                p={1}
-                rounded="md"
-              >
-                {ordem.TipoCliente || 'Tipo não informado'}
-              </Badge>
-
-              <Badge colorScheme={getStatusColor(ordem.Status_OS)}>
-                {ordem.Status_OS || '---'}
-              </Badge>
-            </Flex>
+                <Badge
+                  colorScheme={
+                    ordem.TipoCliente === 'Empresarial'
+                      ? 'blue'
+                      : ordem.TipoCliente === 'Residencial'
+                      ? 'green'
+                      : 'gray'
+                  }
+                  fontSize="0.7em"
+                  p={1}
+                  rounded="md"
+                >
+                  {ordem.TipoCliente || 'Tipo não informado'}
+                </Badge>
+                <Badge colorScheme={getStatusColor(ordem.Status_OS)}>
+                  {ordem.Status_OS || '---'}
+                </Badge>
+              </Flex>
             </Box>
           ))}
         </VStack>
       ) : (
         <Table variant="simple" size="sm">
-          <Thead>
+          <Thead bg={tableHeaderBg}>
             <Tr>
-              <Th>N° O.S.</Th>
-              <Th>Cliente</Th>
-              <Th>Tipo Cliente</Th> 
-              <Th>Empresa</Th>
-              <Th>Status</Th>
-              <Th>Data de Envio</Th>
+              {['N° O.S.', 'Cliente', 'Tipo Cliente', 'Empresa', 'Status', 'Data de Envio'].map(h => (
+                <Th key={h} color={textClr}>
+                  {h}
+                </Th>
+              ))}
             </Tr>
           </Thead>
           <Tbody>
-            {ordens.map((ordem, index) => (
+            {ordens.map((ordem, i) => (
               <Tr
-                  key={index}
-                  _hover={{ bg: 'gray.100', cursor: 'pointer' }}
-                  onClick={() => irParaDetalhe(ordem)}
-                >
-
-                <Td>{ordem.Numero_OS || '---'}</Td>
-                <Td>{ordem.Nome_Cliente || '---'}</Td>
-
+                key={i}
+                _hover={{ bg: tableHoverBg, cursor: 'pointer' }}
+                onClick={() => irParaDetalhe(ordem)}
+              >
+                <Td color={textClr}>{ordem.Numero_OS || '---'}</Td>
+                <Td color={textClr}>{ordem.Nome_Cliente || '---'}</Td>
                 <Td>
                   <Badge
                     colorScheme={
-                      ordem.TipoCliente === 'Empresarial' ? 'blue'
-                      : ordem.TipoCliente === 'Residencial' ? 'green'
-                      : 'gray'
+                      ordem.TipoCliente === 'Empresarial'
+                        ? 'blue'
+                        : ordem.TipoCliente === 'Residencial'
+                        ? 'green'
+                        : 'gray'
                     }
                     fontSize="0.7em"
                     p={1}
@@ -165,17 +193,17 @@ function UltimasOrdens() {
                     {ordem.TipoCliente || 'Tipo não informado'}
                   </Badge>
                 </Td>
-
-                <Td>{ordem.empresa_nome || '---'}</Td>
-
+                <Td color={textClr}>{ordem.empresa_nome}</Td>
                 <Td>
                   <Badge colorScheme={getStatusColor(ordem.Status_OS)}>
                     {ordem.Status_OS || '---'}
                   </Badge>
                 </Td>
-
-                <Td>{ordem.Data_Envio_OS ? new Date(ordem.Data_Envio_OS).toLocaleString('pt-BR') : '---'}</Td>
-
+                <Td color={textClr}>
+                  {ordem.Data_Envio_OS
+                    ? new Date(ordem.Data_Envio_OS).toLocaleString('pt-BR')
+                    : '---'}
+                </Td>
               </Tr>
             ))}
           </Tbody>

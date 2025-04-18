@@ -114,7 +114,53 @@ function FinalizarOS() {
 
       console.log('📤 PATCH FINALIZAR O.S:', payload)
 
+
+
       await apiPatch(`/api/v2/tables/mtnh21kq153to8h/records`, payload)
+
+      // 🔔 Envia notificação após finalizar O.S
+          try {
+            const dadosEmpresa = await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${encodeURIComponent(`(UnicID,eq,${novaListaEmpresas?.find(e => e.Ordens_de_Servico?.some(os => os.UnicID_OS === id))?.UnicID_Empresa || ''})`)}`)
+            const empresa = dadosEmpresa?.list?.[0]
+
+            if (empresa && empresa.tokens_fcm) {
+              let tokens = []
+              try {
+                if (empresa.tokens_fcm?.startsWith?.('[')) {
+                  tokens = JSON.parse(empresa.tokens_fcm).filter(Boolean)
+                } else {
+                  tokens = [empresa.tokens_fcm].filter(Boolean)
+                }
+              } catch (e) {
+                console.warn('Erro ao interpretar tokens FCM:', e)
+              }
+
+              if (tokens.length > 0) {
+                const ordemFinalizada = novaListaEmpresas
+                  .flatMap(e => e.Ordens_de_Servico)
+                  .find(os => os.UnicID_OS === id)
+
+                const primeiroNome = ordemFinalizada?.Nome_Cliente?.split(' ')[0] || 'Cliente'
+
+                const payload = {
+                  id: empresa.UnicID,
+                  tipo: 'empresa',
+                  titulo: `✅ O.S Finalizada Com Sucesso!`,
+                  mensagem: `A ordem ${primeiroNome} foi concluída com sucesso.`,
+                  tokens
+                }
+
+                await fetch('https://service-notify-sgo.nexusnerds.com.br/notificar', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+                })
+              }
+            }
+          } catch (e) {
+            console.error('❌ Falha ao enviar notificação de finalização:', e)
+          }
+
 
       toast({
         title: '✅ Ordem finalizada com sucesso!',

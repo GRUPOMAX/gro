@@ -122,7 +122,7 @@ function ModalAgendarOS({ isOpen, onClose, ordemId, UnicID_Empresa, onAgendado }
             console.log('📦 Enviando payload para empresa:', payloadEmpresa)
 
             try {
-              const resp = await fetch('http://localhost:33003/notificar', {
+              const resp = await fetch('https://service-notify-sgo.nexusnerds.com.br/notificar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payloadEmpresa)

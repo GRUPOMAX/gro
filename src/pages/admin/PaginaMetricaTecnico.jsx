@@ -11,19 +11,18 @@ import {
   Stat,
   StatLabel,
   StatNumber,
-  StatHelpText
-} from '@chakra-ui/react'
-
-import {
   Accordion,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
-  AccordionIcon
+  AccordionIcon,
+  Input,
+  Flex,
+  useColorModeValue,
+  VStack
 } from '@chakra-ui/react'
 
 
-import { Input, Flex } from '@chakra-ui/react'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import AdminSidebarDesktop from '../../components/admin/AdminSidebarDesktop'
@@ -49,6 +48,22 @@ function PaginaMetricaTecnico() {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [ordemExecucao, setOrdemExecucao] = useState(null)
+
+
+
+    // cores adaptáveis
+    const pageBg        = useColorModeValue('gray.50',   'gray.800')
+    const cardBg        = useColorModeValue('white',     'gray.700')
+    const cardBorder    = useColorModeValue('gray.200',  'gray.600')
+    const hoverBg       = useColorModeValue('gray.100',  'gray.600')
+    const textColor     = useColorModeValue('gray.700',  'gray.300')
+    const headingColor  = useColorModeValue('gray.900',  'gray.50')
+    const accentGreenBg = useColorModeValue('green.50',   'green.900')
+    const accentRedBg   = useColorModeValue('red.50',     'red.900')
+    const statBg        = useColorModeValue('gray.100',  'gray.600')
+    const inputBg       = useColorModeValue('white',     'gray.600')
+    const inputBorder   = useColorModeValue('gray.300',  'gray.500')
+    const axisColor     = useColorModeValue('gray.600',  'gray.400')
 
 
 useEffect(() => {
@@ -138,170 +153,156 @@ useEffect(() => {
   if (loading) return <Spinner size="xl" />
 
   return (
-    <Box display="flex">
+    <Box display="flex" bg={pageBg} color={textColor} minH="100vh">
       {!isMobile && <AdminSidebarDesktop />}
       {isMobile && <AdminMobileMenu />}
 
       <Box ml={!isMobile ? '250px' : 0} w="full" p={6} pb={isMobile ? '60px' : 0}>
         {isMobile && <AdminBottomNav />}
 
-        <Button onClick={() => navigate('/admin/tecnicos')} colorScheme="gray" size="sm" mb={4}>
+        <Button size="sm" variant="outline" mb={4} onClick={() => navigate('/admin/tecnicos')}>
           ← Voltar
         </Button>
 
         {ordemExecucao && (
-  isMobile ? (
-    <Accordion allowToggle mb={4}>
-      <AccordionItem 
-        border="1px solid"
-        borderColor="green.300"
-        borderRadius="lg"
-        bg="green.50"
-        boxShadow="md"
-        px={4}
-        py={2}
-      >
-        <h2>
-          <AccordionButton>
-            <Box flex="1" textAlign="left" fontWeight="semibold" color="green.700">
-              🔧 Ordem em Execução
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-        </h2>
-        <AccordionPanel pt={2} color="gray.700" fontSize="sm">
-          <Text><strong>Cliente:</strong> {ordemExecucao.Nome_Cliente}</Text>
-          <Text><strong>Telefone:</strong> {ordemExecucao.Telefone1_Cliente}</Text>
-          <Text><strong>Tipo:</strong> {ordemExecucao.Tipo_OS}</Text>
-          <Text><strong>Endereço:</strong> {ordemExecucao.Endereco_Cliente}</Text>
-        </AccordionPanel>
-      </AccordionItem>
-    </Accordion>
-  ) : (
-    <Box
-      position="absolute"
-      top="20px"
-      right="20px"
-      bg="green.50"
-      borderRadius="lg"
-      border="1px solid"
-      borderColor="green.400"
-      boxShadow="lg"
-      p={4}
-      zIndex={1000}
-      w="300px"
-      color="gray.800"
-    >
-      <Heading size="sm" mb={3} color="green.700">🔧 Ordem em Execução</Heading>
-      <Text fontSize="sm" mb={1}><strong>Cliente:</strong> {ordemExecucao.Nome_Cliente}</Text>
-      <Text fontSize="sm" mb={1}><strong>Telefone:</strong> {ordemExecucao.Telefone1_Cliente}</Text>
-      <Text fontSize="sm" mb={1}><strong>Tipo:</strong> {ordemExecucao.Tipo_OS}</Text>
-      <Text fontSize="sm"><strong>Endereço:</strong> {ordemExecucao.Endereco_Cliente}</Text>
-    </Box>
-  )
-)}
+          isMobile ? (
+            <Accordion allowToggle mb={4} bg={accentGreenBg} borderRadius="md" border={`1px solid ${cardBorder}`}>
+              <AccordionItem border="none">
+                <AccordionButton>
+                  <Box flex="1" textAlign="left" fontWeight="semibold" color={headingColor}>
+                    🔧 Ordem em Execução
+                  </Box>
+                  <AccordionIcon />
+                </AccordionButton>
+                <AccordionPanel pb={4}>
+                  <Text><strong>Cliente:</strong> {ordemExecucao.Nome_Cliente}</Text>
+                  <Text><strong>Telefone:</strong> {ordemExecucao.Telefone1_Cliente}</Text>
+                  <Text><strong>Tipo:</strong> {ordemExecucao.Tipo_OS}</Text>
+                  <Text><strong>Endereço:</strong> {ordemExecucao.Endereco_Cliente}</Text>
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
+          ) : (
+              <Box
+                position="absolute"
+                top={6}
+                right={6}
+                bg={accentGreenBg}
+                p={4}
+                w="380px"
+                borderRadius="md"
+                border="1px solid green.400"
+                boxShadow="lg"
+                wordBreak="break-word"        // força quebra de palavra
+                overflowWrap="break-word"     // garante que o texto se adapte
+              >
+                <Heading size="sm" mb={2} color={headingColor} noOfLines={1}>
+                  🔧 Ordem em Execução
+                </Heading>
+                <VStack align="start" spacing={1} textAlign="left">
+                  <Text fontSize="sm" whiteSpace="normal" wordBreak="break-word">
+                    <strong>Cliente:</strong> {ordemExecucao.Nome_Cliente}
+                  </Text>
+                  <Text fontSize="sm" whiteSpace="normal" wordBreak="break-word">
+                    <strong>Telefone:</strong> {ordemExecucao.Telefone1_Cliente}
+                  </Text>
+                  <Text fontSize="sm" whiteSpace="normal" wordBreak="break-word">
+                    <strong>Tipo:</strong> {ordemExecucao.Tipo_OS}
+                  </Text>
+                  <Text fontSize="sm" whiteSpace="normal" wordBreak="break-word">
+                    <strong>Endereço:</strong> {ordemExecucao.Endereco_Cliente}
+                  </Text>
+                </VStack>
+              </Box>
 
+          )
+        )}
 
-
-
-        <Heading size="lg" mb={4}>Métricas do Técnico</Heading>
+        <Heading size="lg" mb={4} color={headingColor}>Métricas do Técnico</Heading>
         <Text fontWeight="bold" mb={6}>{nomeTecnico}</Text>
 
-        {metricas && (
+        {/* Filtros de Data */}
+        <Flex gap={4} mb={6} direction={{ base: 'column', md: 'row' }}>
+          <Box>
+            <Text mb={1}>Data Início</Text>
+            <DatePicker
+              selected={dataInicio}
+              onChange={setDataInicio}
+              locale="pt-BR"
+              dateFormat="dd/MM/yyyy"
+              customInput={<Input bg={inputBg} borderColor={inputBorder} />}
+            />
+          </Box>
+          <Box>
+            <Text mb={1}>Data Fim</Text>
+            <DatePicker
+              selected={dataFim}
+              onChange={setDataFim}
+              locale="pt-BR"
+              dateFormat="dd/MM/yyyy"
+              customInput={<Input bg={inputBg} borderColor={inputBorder} />}
+            />
+          </Box>
+        </Flex>
 
+        {/* Estatísticas */}
+        <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4} mb={6}>
+          <Stat p={4} bg={statBg} borderRadius="md" border={`1px solid ${cardBorder}`}>
+            <StatLabel>Finalizadas no Mês</StatLabel>
+            <StatNumber>{metricas.totalFinalizadas}</StatNumber>
+          </Stat>
+          <Stat p={4} bg={statBg} borderRadius="md" border={`1px solid ${cardBorder}`}>
+            <StatLabel>Pendentes</StatLabel>
+            <StatNumber>{metricas.pendentes}</StatNumber>
+          </Stat>
+          <Stat p={4} bg={statBg} borderRadius="md" border={`1px solid ${cardBorder}`}>
+            <StatLabel>Reagendadas</StatLabel>
+            <StatNumber>{metricas.reagendadas}</StatNumber>
+          </Stat>
+          <Stat p={4} bg={statBg} borderRadius="md" border={`1px solid ${cardBorder}`}>
+            <StatLabel>Atribuídas</StatLabel>
+            <StatNumber>{metricas.atribuidas}</StatNumber>
+          </Stat>
+        </SimpleGrid>
 
+        {/* Mais Rápida / Mais Lenta */}
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+          <Box p={4} bg={accentGreenBg} borderRadius="md" border={`1px solid green.400`}>
+            <Heading size="sm" mb={2}>Mais Rápida</Heading>
+            <Text fontSize="sm"><strong>Cliente:</strong> {metricas.maisRapida?.Nome_Cliente}</Text>
+            <Text fontSize="sm">
+              <strong>Tempo:</strong>{' '}
+              {metricas.maisRapida?.Data_Entrega_OS
+                ? `${(((new Date(metricas.maisRapida.Data_Entrega_OS) - new Date(metricas.maisRapida.Data_Envio_OS)) / 3600000).toFixed(2))}h`
+                : 'N/A'}
+            </Text>
+          </Box>
+          <Box p={4} bg={accentRedBg} borderRadius="md" border={`1px solid red.400`}>
+            <Heading size="sm" mb={2}>Mais Lenta</Heading>
+            <Text fontSize="sm"><strong>Cliente:</strong> {metricas.maisLenta?.Nome_Cliente}</Text>
+            <Text fontSize="sm">
+              <strong>Tempo:</strong>{' '}
+              {metricas.maisLenta?.Data_Entrega_OS
+                ? `${(((new Date(metricas.maisLenta.Data_Entrega_OS) - new Date(metricas.maisLenta.Data_Envio_OS)) / 3600000).toFixed(2))}h`
+                : 'N/A'}
+            </Text>
+          </Box>
+        </SimpleGrid>
 
-          <>
-
-                    <Flex gap={4} mb={6} direction={{ base: 'column', md: 'row' }}>
-                    <Box>
-                        <Text mb={1}>Data Início</Text>
-                        <DatePicker
-                        selected={dataInicio}
-                        onChange={(date) => setDataInicio(date)}
-                        locale="pt-BR"
-                        dateFormat="dd/MM/yyyy"
-                        placeholderText="Selecione a data"
-                        customInput={<Input />}
-                        />
-                    </Box>
-                    <Box>
-                        <Text mb={1}>Data Fim</Text>
-                        <DatePicker
-                        selected={dataFim}
-                        onChange={(date) => setDataFim(date)}
-                        locale="pt-BR"
-                        dateFormat="dd/MM/yyyy"
-                        placeholderText="Selecione a data"
-                        customInput={<Input />}
-                        />
-                    </Box>
-                    </Flex>
-
-                <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4} mb={6}>
-                <Stat p={4} shadow="md" border="1px" borderColor="gray.100" borderRadius="md" bg="gray.50">
-                    <StatLabel>Finalizadas no Mês</StatLabel>
-                    <StatNumber>{metricas.totalFinalizadas}</StatNumber>
-                </Stat>
-
-                <Stat p={4} shadow="md" border="1px" borderColor="gray.100" borderRadius="md" bg="gray.50">
-                    <StatLabel>Pendentes</StatLabel>
-                    <StatNumber>{metricas.pendentes}</StatNumber>
-                </Stat>
-
-                <Stat p={4} shadow="md" border="1px" borderColor="gray.100" borderRadius="md" bg="gray.50">
-                    <StatLabel>Reagendadas</StatLabel>
-                    <StatNumber>{metricas.reagendadas}</StatNumber>
-                </Stat>
-
-                <Stat p={4} shadow="md" border="1px" borderColor="gray.100" borderRadius="md" bg="gray.50">
-                    <StatLabel>Atribuídas</StatLabel>
-                    <StatNumber>{metricas.atribuidas}</StatNumber>
-                </Stat>
-                </SimpleGrid>
-
-
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
-              <Box p={4} shadow="md" border="1px" borderColor="gray.100" borderRadius="md" bg="green.50">
-                <Heading size="sm" mb={2}>Mais Rápida</Heading>
-                <Text><strong>Cliente:</strong> {metricas.maisRapida?.Nome_Cliente}</Text>
-                <Text>
-                  <strong>Tempo:</strong>{' '}
-                  {metricas.maisRapida?.Data_Entrega_OS && metricas.maisRapida?.Data_Envio_OS
-                    ? `${((new Date(metricas.maisRapida.Data_Entrega_OS) - new Date(metricas.maisRapida.Data_Envio_OS)) / 3600000).toFixed(2)}h`
-                    : 'N/A'}
-                </Text>
-              </Box>
-
-              <Box p={4} shadow="md" border="1px" borderColor="gray.100" borderRadius="md" bg="red.50">
-                <Heading size="sm" mb={2}>Mais Lenta</Heading>
-                <Text><strong>Cliente:</strong> {metricas.maisLenta?.Nome_Cliente}</Text>
-                <Text>
-                  <strong>Tempo:</strong>{' '}
-                  {metricas.maisLenta?.Data_Entrega_OS && metricas.maisLenta?.Data_Envio_OS
-                    ? `${((new Date(metricas.maisLenta.Data_Entrega_OS) - new Date(metricas.maisLenta.Data_Envio_OS)) / 3600000).toFixed(2)}h`
-                    : 'N/A'}
-                </Text>
-              </Box>
-
-
-            </SimpleGrid>
-
-            <Heading size="sm" mb={2}>Gráfico</Heading>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={[
-                { name: 'Finalizadas', valor: metricas.totalFinalizadas },
-                { name: 'Pendentes', valor: metricas.pendentes },
-                { name: 'Reagendadas', valor: metricas.reagendadas }
-              ]}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="valor" fill="#805AD5" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </>
-        )}
+        {/* Gráfico */}
+        <Heading size="sm" mb={2} color={headingColor}>Gráfico de Atividades</Heading>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={[
+            { name: 'Finalizadas', valor: metricas.totalFinalizadas },
+            { name: 'Pendentes',   valor: metricas.pendentes },
+            { name: 'Reagendadas', valor: metricas.reagendadas }
+          ]}>
+            <XAxis dataKey="name" stroke={axisColor}/>
+            <YAxis stroke={axisColor}/>
+            <Tooltip/>
+            <Bar dataKey="valor" fill="#805AD5" radius={[4,4,0,0]}/>
+          </BarChart>
+        </ResponsiveContainer>
       </Box>
     </Box>
   )

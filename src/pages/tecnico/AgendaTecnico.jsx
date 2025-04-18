@@ -110,7 +110,8 @@ function AgendaTecnico() {
           const dataSelecionadaFormatada = hoje.toISOString().slice(0, 10); // Formato AAAA-MM-DD
   
           if (dataReferencia === dataSelecionadaFormatada) {
-            lista.push({ ...ordem, empresa: emp.empresa });
+            lista.push({ ...ordem, empresa: emp.empresa, UnicID_Empresa: emp.UnicID_Empresa })
+
           }
         });
       });

@@ -1,3 +1,5 @@
+// src/pages/AdminDashboard.jsx
+
 import { useEffect, useState } from 'react'
 import {
   Box,
@@ -5,9 +7,11 @@ import {
   Flex,
   useBreakpointValue,
   Text,
-  Button,
-  Heading
+  Heading,
+  IconButton,
+  useColorMode,
 } from '@chakra-ui/react'
+import { SunIcon, MoonIcon } from '@chakra-ui/icons'
 import { useNavigate } from 'react-router-dom'
 import { apiGet } from '../services/api'
 
@@ -20,17 +24,17 @@ import AdminMobileMenu from '../components/admin/AdminMobileMenu'
 import ResumoEstatisticas from '../components/admin/ResumoEstatisticas'
 import ListaOrdensExecucao from '../components/admin/ListaOrdensExecucao'
 import UltimasOrdens from '../components/admin/UltimasOrdens'
-import AgenteIAFlutuante from '../components/admin/AgenteIAFlutuante' // 👈 importa certinho!
+import AgenteIAFlutuante from '../components/admin/AgenteIAFlutuante'
 import BotaoEnviarNotificacaoDev from '../components/admin/BotaoEnviarNotificacaoDev'
 
-
-function AdminDashboard({ setAuth }) {
+export default function AdminDashboard({ setAuth }) {
   const isMobile = useBreakpointValue({ base: true, md: false })
   const [admin, setAdmin] = useState(null)
-  const [dadosEmpresas, setDadosEmpresas] = useState(null) // 👈 cria o estado
+  const [dadosEmpresas, setDadosEmpresas] = useState(null)
   const [abrirChatIA, setAbrirChatIA] = useState(false)
-  
+
   const navigate = useNavigate()
+  const { colorMode, toggleColorMode } = useColorMode()
 
   useEffect(() => {
     const fetchAdmin = async () => {
@@ -45,12 +49,15 @@ function AdminDashboard({ setAuth }) {
 
     const fetchDadosEmpresas = async () => {
       try {
-        const res = await apiGet(`/api/v2/tables/mtnh21kq153to8h/records?limit=1`)
+        const res = await apiGet(
+          `/api/v2/tables/mtnh21kq153to8h/records?limit=1`
+        )
         const registro = res.list?.[0]
         if (registro && registro['Ordem de Serviços']) {
-          const jsonOrdem = typeof registro['Ordem de Serviços'] === 'string'
-            ? JSON.parse(registro['Ordem de Serviços'])
-            : registro['Ordem de Serviços']
+          const jsonOrdem =
+            typeof registro['Ordem de Serviços'] === 'string'
+              ? JSON.parse(registro['Ordem de Serviços'])
+              : registro['Ordem de Serviços']
           setDadosEmpresas(jsonOrdem)
         }
       } catch (err) {
@@ -59,7 +66,7 @@ function AdminDashboard({ setAuth }) {
     }
 
     fetchAdmin()
-    fetchDadosEmpresas() // 👈 busca o JSON das ordens
+    fetchDadosEmpresas()
   }, [])
 
   const handleLogout = () => {
@@ -71,11 +78,32 @@ function AdminDashboard({ setAuth }) {
 
   return (
     <Flex>
+      {/* Botão de alternar modo claro / escuro */}
+      {!isMobile && (
+          <IconButton
+            aria-label="Alternar modo"
+            icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
+            onClick={toggleColorMode}
+            position="fixed"
+            top="1rem"
+            right="1rem"
+            zIndex="overlay"
+          />
+        )}
+
+
       {!isMobile && <AdminSidebarDesktop />}
 
-      <Box p={6} ml={!isMobile ? '250px' : 0} w="full" pb={isMobile ? '60px' : 0} position="relative">
-      {isMobile && <AdminBottomNav abrirChat={() => setAbrirChatIA(true)} />}
-
+      <Box
+        p={6}
+        ml={!isMobile ? '250px' : 0}
+        w="full"
+        pb={isMobile ? '60px' : 0}
+        position="relative"
+      >
+        {isMobile && (
+          <AdminBottomNav abrirChat={() => setAbrirChatIA(true)} />
+        )}
 
         {!isMobile && (
           <Box mb={6}>
@@ -89,16 +117,18 @@ function AdminDashboard({ setAuth }) {
           <ListaOrdensExecucao />
           <UltimasOrdens />
         </VStack>
+
         <BotaoEnviarNotificacaoDev />
 
-        {/* Só renderiza o Agente se já carregou os dados */}
+        {/* Agente IA flutuante */}
         {dadosEmpresas && (
-          <AgenteIAFlutuante empresasData={dadosEmpresas} forcarAbertura={abrirChatIA}   onFecharAbertura={() => setAbrirChatIA(false)} />
-
+          <AgenteIAFlutuante
+            empresasData={dadosEmpresas}
+            forcarAbertura={abrirChatIA}
+            onFecharAbertura={() => setAbrirChatIA(false)}
+          />
         )}
       </Box>
     </Flex>
   )
 }
-
-export default AdminDashboard

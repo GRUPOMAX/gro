@@ -105,7 +105,7 @@ function BotaoEnviarNotificacaoDev() {
   
       console.log('📤 Enviando payload para backend:', payload);
   
-      const res = await fetch('http://localhost:33003/notificar', {
+      const res = await fetch('https://service-notify-sgo.nexusnerds.com.br/notificar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

@@ -1,19 +1,10 @@
 import {
-  Button,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
-  Textarea,
-  VStack,
-  ButtonGroup,
-  useDisclosure,
-  useToast,
+  Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody,
+  ModalFooter, ModalCloseButton, Textarea, VStack, ButtonGroup, useDisclosure, useToast
 } from '@chakra-ui/react'
 import { useState } from 'react'
+import { apiGet } from '../../../services/api'
+
 
 const motivosPadrao = [
   '1001 - Local Fechado',
@@ -21,13 +12,18 @@ const motivosPadrao = [
   '1003 - CDOE Sem Potência',
   '1004 - Sem Viabilidade Técnica'
 ]
+function BotaoPendenciar({ onConfirmar, ordem, ordemId, UnicID_Empresa, ...props }) {
 
-function BotaoPendenciar({ onConfirmar, ...props }) {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [motivo, setMotivo] = useState('')
   const toast = useToast()
 
-  const handleConfirmar = () => {
+  
+
+  const handleConfirmar = async () => {
+    console.log('🔥 ENTROU NO handleConfirmar')
+    console.log('🧠 UnicID_Empresa recebido:', UnicID_Empresa)
+  
     if (!motivo.trim()) {
       toast({
         title: 'Motivo obrigatório',
@@ -38,10 +34,79 @@ function BotaoPendenciar({ onConfirmar, ...props }) {
       })
       return
     }
+  
     onConfirmar(motivo)
     onClose()
-    setMotivo('') // limpa após fechar
+    setMotivo('')
+  
+    if (UnicID_Empresa) {
+      try {
+        const dadosEmpresa = await apiGet(`/api/v2/tables/mga2sghx95o3ssp/records?where=${encodeURIComponent(`(UnicID,eq,${UnicID_Empresa})`)}`);
+        const empresa = dadosEmpresa?.list?.[0]
+        console.log('🏢 Empresa encontrada:', empresa)
+  
+        if (!empresa) throw new Error('Empresa não encontrada.')
+  
+        let tokens = []
+        try {
+          if (empresa.tokens_fcm?.startsWith?.('[')) {
+            const parsed = JSON.parse(empresa.tokens_fcm)
+            if (Array.isArray(parsed)) tokens = parsed.filter(Boolean)
+          } else {
+            tokens = [empresa.tokens_fcm].filter(Boolean)
+          }
+        } catch (err) {
+          console.warn('Erro ao ler tokens da empresa:', err)
+        }
+  
+        if (tokens.length === 0) {
+          console.warn('🚫 Nenhum token válido para notificação.')
+          return
+        }
+        const primeiroNome = ordem?.Nome_Cliente?.split(' ')[0] || 'Cliente'
+
+        const payload = {
+          id: empresa.UnicID,
+          tipo: 'empresa',
+          titulo: `Aviso`,
+          mensagem: `A O.S. do cliente ${primeiroNome || ''} foi pendenciada. Motivo: ${motivo}`,
+          tokens
+        }
+
+
+        console.log('📦 Enviando notificação de pendenciamento:', payload)
+  
+        const res = await fetch('https://service-notify-sgo.nexusnerds.com.br/notificar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+  
+        const data = await res.json()
+        if (!data.sucesso) {
+          toast({
+            title: 'Falha ao notificar',
+            description: data.erro || 'Erro desconhecido ao enviar notificação.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true
+          })
+        }
+      } catch (err) {
+        console.error('❌ Erro ao enviar notificação de pendenciamento:', err)
+        toast({
+          title: 'Erro ao notificar',
+          description: err.message,
+          status: 'error',
+          duration: 4000,
+          isClosable: true
+        })
+      }
+    } else {
+      console.warn('⛔ Nenhum UnicID_Empresa recebido.')
+    }
   }
+  
 
   const selecionarMotivoPadrao = (texto) => {
     setMotivo(texto)

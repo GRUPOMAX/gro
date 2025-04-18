@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+
 import {
   Box,
   Button,
@@ -13,8 +12,12 @@ import {
   Flex,
   useColorModeValue
 } from '@chakra-ui/react'
-import { apiPost, apiGet, apiPatch } from '../services/api'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { apiPost, apiGet, apiPatch } from '../services/api';  // Importando corretamente
+
 import { v4 as uuidv4 } from 'uuid'
+
 import AdminSidebarDesktop from '../components/admin/AdminSidebarDesktop'
 import AdminBottomNav from '../components/admin/AdminBottomNav'
 import AdminMobileMenu from '../components/admin/AdminMobileMenu'
@@ -32,19 +35,36 @@ function CadastroEmpresa() {
   const navigate = useNavigate()
   const isMobile = useBreakpointValue({ base: true, md: false })
 
-  // Cores para light/dark mode
+
+
   const pageBg      = useColorModeValue('gray.50',  'gray.800')
   const formBg      = useColorModeValue('white',   'gray.700')
   const inputBg     = useColorModeValue('white',   'gray.600')
   const inputBorder = useColorModeValue('gray.300','gray.500')
   const textColor   = useColorModeValue('gray.800','gray.100')
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Atualiza tabela de Ordens de Serviço após criar empresa
+  const buscarEmpresas = async () => {
+    try {
+      const response = await apiGet('/api/v2/tables/mtnh21kq153to8h/records')
+      // Verifique se a resposta tem o formato esperado
+      if (response && response.list) {
+        return response.list
+      } else {
+        console.error('Formato de resposta inesperado:', response)
+        return []  // Retorna um array vazio caso a resposta seja inválida
+      }
+    } catch (error) {
+      console.error('Erro ao buscar empresas:', error)
+      return []  // Retorna um array vazio em caso de erro
+    }
+  }
+  
+
   const adicionarOuAtualizarEmpresa = async (UnicID_Empresa) => {
     // Primeira coisa: obter a `UnicID_Empresa` da tabela de administração
     const respostaAdmin = await apiGet('/api/v2/tables/mga2sghx95o3ssp/records');
@@ -101,59 +121,45 @@ function CadastroEmpresa() {
       console.error('Erro ao atualizar empresa e ordem de serviço', response);
     }
   };
-
-  const handleSubmit = async e => {
-    e.preventDefault()
-    const { email, senha, nome, empresa, limite_OS } = form
-
-    // Validação campos obrigatórios
+  
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    const { email, senha, nome, empresa, limite_OS } = form;
     if (!email || !senha || !nome || !empresa || !limite_OS) {
-      return toast({ title: 'Preencha todos os campos.', status: 'error', duration: 3000 })
+      toast({ title: 'Preencha todos os campos.', status: 'error', duration: 3000 });
+      return;
     }
-
-    // 1) Verifica se e‑mail já existe na tabela de administração
-    try {
-      const respAdmin = await apiGet('/api/v2/tables/mga2sghx95o3ssp/records')
-      const existente = respAdmin.list.some(u =>
-        u.email_empresa?.toLowerCase() === email.trim().toLowerCase()
-      )
-      if (existente) {
-        return toast({
-          title: 'E‑mail já cadastrado.',
-          description: 'Use outro e‑mail ou recupere sua conta.',
-          status: 'warning',
-          duration: 4000
-        })
-      }
-    } catch (err) {
-      console.error('Erro ao verificar e‑mail existente:', err)
-      // Não abortamos: seguimos para tentar cadastrar
-    }
-
-    // 2) Gera novo UnicID e payload
-    const UnicID_Empresa = uuidv4()
+  
+    // Gerando o UnicID da empresa antes de enviar
+    const UnicID_Empresa = uuidv4();  // Gerando o UnicID da empresa agora
+  
     const payload = {
-      Email:          email.trim().toLowerCase(),
-      password:       senha.trim(),
-      nome:           nome.trim(),
-      empresa_nome:   empresa.trim(),
-      tipo:           'empresa',
-      UnicID:         UnicID_Empresa,
-      Limite_de_Ordem: limite_OS
-    }
-
-    // 3) Post e pós‑processamento
+      Email: email.trim().toLowerCase(),
+      password: senha.trim(),
+      nome: nome.trim(),
+      empresa_nome: empresa.trim(),
+      tipo: 'empresa',
+      UnicID: UnicID_Empresa, // Incluindo a UnicID gerada no payload
+      Limite_de_Ordem: limite_OS,
+    };
+  
     try {
-      await apiPost('/api/v2/tables/mga2sghx95o3ssp/records', payload)
-      toast({ title: 'Empresa cadastrada com sucesso!', status: 'success', duration: 3000 })
-      await adicionarOuAtualizarEmpresa(UnicID_Empresa)
-      navigate('/login')
+      await apiPost('/api/v2/tables/mga2sghx95o3ssp/records', payload);
+      toast({ title: 'Empresa cadastrada com sucesso!', status: 'success', duration: 3000 });
+  
+      // Chama a função para adicionar ou atualizar a empresa na tabela mtnh21kq153to8h
+      await adicionarOuAtualizarEmpresa(UnicID_Empresa);
+  
+      navigate('/login');
     } catch (err) {
-      console.error('Erro ao cadastrar empresa:', err)
-      toast({ title: 'Erro ao cadastrar empresa.', status: 'error', duration: 3000 })
+      console.error(err);
+      toast({ title: 'Erro ao cadastrar empresa.', status: 'error', duration: 3000 });
     }
-  }
-
+  };
+  
+  
   return (
     <Flex bg={pageBg} color={textColor} minH="100vh">
       {!isMobile && <AdminSidebarDesktop />}

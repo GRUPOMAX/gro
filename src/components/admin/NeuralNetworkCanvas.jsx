@@ -1,153 +1,182 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, useBreakpointValue } from '@chakra-ui/react';
+import { Box, Text, useBreakpointValue } from '@chakra-ui/react';
 
+const TOTAL_POINTS = 30;
 
-export default function NeuralNetworkCanvas({ ativo }) {
+export default function NeuralNetworkCanvas({ ativo, lowUsage, dadosAPI = {} }) {
   const canvasRef = useRef(null);
+  const [hovered, setHovered] = useState(null);
   const [pontos, setPontos] = useState([]);
-  const [coresPontos, setCoresPontos] = useState([]);
+  const [dadosTooltip, setDadosTooltip] = useState([]);
+  const [bolinhasAlerta, setBolinhasAlerta] = useState([]);
   const isMobile = useBreakpointValue({ base: true, md: false });
 
-  // Cria pontos iniciais
+  const agrupado = dadosAPI.agrupado || {};
+  const ordens = dadosAPI.os || [];
+
+  const dadosCombinados = [
+    ...(agrupado.administracao || []),
+    ...(agrupado.empresas || []),
+    ...(agrupado.tecnicos || []),
+    ...(agrupado.tarefas || []),
+    ...(ordens || [])
+  ];
+
+  const extrairTooltip = (item) => {
+    const email = item?.Email ?? item?.email_tecnico ?? null;
+    const empresa = item?.empresa ?? item?.empresa_nome ?? null;
+    const cliente = item?.Nome_Cliente ?? null;
+    const status = item?.Status_OS ?? item?.status ?? null;
+    const rawDate = item?.Data_Entrega_OS ?? item?.Data_Agendamento_OS ?? item?.Data_Envio_OS ?? item?.CreatedAt;
+
+    return {
+      tipo: cliente ? 'OS' : empresa ? 'Empresa' : email ? 'Email' : 'Outro',
+      valor: cliente || empresa || email || '[Indefinido]',
+      status: status || null,
+      data: rawDate ? new Date(rawDate).toLocaleDateString() : null
+    };
+  };
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const { width: w, height: h } = canvasRef.current;
+    const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2.5;
+
+    const pts = Array.from({ length: TOTAL_POINTS }, () => {
+      const θ = Math.random() * 2 * Math.PI;
+      return {
+        x: cx + Math.cos(θ) * R,
+        y: cy + Math.sin(θ) * R,
+        dx: (Math.random() - 0.5) * 2,
+        dy: (Math.random() - 0.5) * 2
+      };
+    });
+
+    setPontos(pts);
+    setDadosTooltip(dadosCombinados.map(extrairTooltip));
+  }, [dadosAPI]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
-    const width = canvas.width;
-    const height = canvas.height;
+    if (!canvas) return;
 
+    const onMove = e => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top) * scaleY;
 
+      const hit = pontos.findIndex(p => Math.hypot(p.x - mx, p.y - my) < 6);
+      if (hit >= 0) {
+        setHovered({ idx: hit, x: mx + 10, y: my + 10 });
+      } else {
+        setHovered(null);
+      }
+    };
 
+    canvas.addEventListener('mousemove', onMove);
+    canvas.addEventListener('mouseleave', () => setHovered(null));
+    return () => {
+      canvas.removeEventListener('mousemove', onMove);
+      canvas.removeEventListener('mouseleave', () => setHovered(null));
+    };
+  }, [pontos]);
 
-    const criarPontos = () => Array.from({ length: 30 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      dx: (Math.random() - 0.5) * 2,
-      dy: (Math.random() - 0.5) * 2,
-    }));
-
-    setPontos(criarPontos());
-  }, []);
-
-  // Atualiza a cor das bolinhas de forma aleatória se API estiver parada
-  useEffect(() => {
-    if (!ativo) {
-      const interval = setInterval(() => {
-        setCoresPontos(
-          Array.from({ length: 30 }, () => (Math.random() > 0.7 ? '#e61b00' : '#00a621'))
-        );
-      }, 900); // muda a cada 800ms
-
-      return () => clearInterval(interval);
-    } else {
-      // Se voltar ativo, tudo verde
-      setCoresPontos(Array(30).fill('#00a621'));
-    }
-  }, [ativo]);
-
-  // Faz a animação
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    const { width, height } = canvas;
 
-    function desenhar() {
+    function draw() {
       ctx.clearRect(0, 0, width, height);
-
-      // Desenha linhas entre pontos
-      for (let i = 0; i < pontos.length; i++) {
+      pontos.forEach((p1, i) => {
         for (let j = i + 1; j < pontos.length; j++) {
-          const dx = pontos[i].x - pontos[j].x;
-          const dy = pontos[i].y - pontos[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 100) {
-            ctx.strokeStyle = '#080808'; // linhas sempre pretas
-            ctx.lineWidth = 1;
+          const p2 = pontos[j];
+          if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < 120) {
             ctx.beginPath();
-            ctx.moveTo(pontos[i].x, pontos[i].y);
-            ctx.lineTo(pontos[j].x, pontos[j].y);
+            ctx.strokeStyle = '#111';
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
             ctx.stroke();
           }
         }
-      }
+      });
 
-      // Desenha bolinhas com cores dinâmicas
-      pontos.forEach((ponto, idx) => {
+      pontos.forEach((p, i) => {
         ctx.beginPath();
-        ctx.arc(ponto.x, ponto.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#070730';
-        ctx.fill();
-        ctx.strokeStyle = coresPontos[idx] || '#00a621'; // fallback verde se ainda não tiver cor
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        const cor = dadosTooltip[i]
+          ? '#FFD700'
+          : bolinhasAlerta.includes(i)
+          ? '#e61b00'
+          : '#0da335';
+        ctx.strokeStyle = cor;
         ctx.stroke();
       });
 
-      requestAnimationFrame(desenhar);
+      requestAnimationFrame(draw);
     }
 
-    desenhar();
-  }, [pontos, coresPontos]);
+    draw();
+  }, [pontos, dadosTooltip, bolinhasAlerta]);
 
-  // Atualiza os pontos se API estiver ativa/parada
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPontos(prev =>
-        prev.map(ponto => {
-          const speedMultiplier = ativo ? 1 : 0.2;
-          const width = canvasRef.current.width;
-          const height = canvasRef.current.height;
-
-          let novoX = ponto.x + ponto.dx * speedMultiplier;
-          let novoY = ponto.y + ponto.dy * speedMultiplier;
-
-          if (novoX <= 0 || novoX >= width) ponto.dx *= -1;
-          if (novoY <= 0 || novoY >= height) ponto.dy *= -1;
-
-          return {
-            ...ponto,
-            x: Math.min(width, Math.max(0, novoX)),
-            y: Math.min(height, Math.max(0, novoY)),
-          };
-        })
-      );
+    const iv = setInterval(() => {
+      setPontos(ps => ps.map(p => {
+        const speed = ativo ? 1 : 0.2;
+        let x = p.x + p.dx * speed;
+        let y = p.y + p.dy * speed;
+        if (x < 0 || x > canvasRef.current.width) p.dx *= -1;
+        if (y < 0 || y > canvasRef.current.height) p.dy *= -1;
+        return {
+          ...p,
+          x: Math.max(0, Math.min(canvasRef.current.width, x)),
+          y: Math.max(0, Math.min(canvasRef.current.height, y))
+        };
+      }));
     }, 30);
-
-    return () => clearInterval(interval);
+    return () => clearInterval(iv);
   }, [ativo]);
 
-// Aqui muda dinamicamente:
-if (isMobile) {
-    return (
-      <Box
-        w={{ base: '100%', md: '450px' }}
-        h={{ base: '200px', md: '150px' }}
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        mx="auto"
-        mb={6}
-        bg="white"
-        borderRadius="xl"
-        boxShadow="md"
-        p={2}
-      >
-        <canvas
-          ref={canvasRef}
-          style={{
-            width: '100%',
-            height: '100%',
-            borderRadius: '12px',
-          }}
-        />
-      </Box>
-    );
-  }
+  useEffect(() => {
+    const toggleAlerta = setInterval(() => {
+      const novas = new Set();
+      while (novas.size < 3) {
+        novas.add(Math.floor(Math.random() * TOTAL_POINTS));
+      }
+      setBolinhasAlerta([...novas]);
+    }, 1200);
+    return () => clearInterval(toggleAlerta);
+  }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={450}
-      height={150}
-      style={{ borderRadius: '12px' }}
-    />
+    <Box position="relative" w={{ base: '100%', md: '600px' }} h={{ base: '240px', md: '180px' }} mx="auto">
+      <canvas
+        ref={canvasRef}
+        width={600}
+        height={180}
+        style={{ width: '100%', height: '100%', borderRadius: 12 }}
+      />
+
+      {hovered && hovered.idx < dadosTooltip.length && (
+        <Box
+          position="absolute"
+          top={`${hovered.y}px`}
+          left={`${hovered.x}px`}
+          bg="gray.800"
+          color="white"
+          p={2}
+          fontSize="xs"
+          borderRadius="md"
+          pointerEvents="none"
+        >
+          <Text><b>{dadosTooltip[hovered.idx].tipo}:</b> {dadosTooltip[hovered.idx].valor}</Text>
+          {dadosTooltip[hovered.idx].status && <Text><b>Status:</b> {dadosTooltip[hovered.idx].status}</Text>}
+          {dadosTooltip[hovered.idx].data && <Text><b>Data:</b> {dadosTooltip[hovered.idx].data}</Text>}
+        </Box>
+      )}
+    </Box>
   );
 }

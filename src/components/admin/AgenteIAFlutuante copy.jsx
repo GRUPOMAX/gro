@@ -15,8 +15,7 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
-  useBreakpointValue,
-  useColorModeValue
+  useBreakpointValue
 } from '@chakra-ui/react'
 import { ChatIcon, CloseIcon } from '@chakra-ui/icons'
 import { FaPaperPlane } from 'react-icons/fa'
@@ -36,15 +35,6 @@ export default function AgenteIAFlutuante({ empresasData, forcarAbertura, onFech
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const isMobile = useBreakpointValue({ base: true, md: false })
-
-  const bgCard       = useColorModeValue('white',     'gray.800')
-  const bgIABubble   = useColorModeValue('gray.100',  'gray.700')
-  const bgUserBubble = useColorModeValue('blue.100',  'blue.900')
-  const borderClr    = useColorModeValue('gray.200',  'gray.600')
-  const inputBg      = useColorModeValue('white',     'gray.700')
-  const versionColor = useColorModeValue('gray.500',  'gray.400')
-  const textColorIABubble   = useColorModeValue('gray.800', 'gray.100')
-  const textColorUserBubble = useColorModeValue('gray.800', 'white')
 
   const frasesCarregando = ['Digitando...', 'Analisando dados...', 'Verificando informações...']
   let fraseIndex = 0
@@ -201,24 +191,24 @@ export default function AgenteIAFlutuante({ empresasData, forcarAbertura, onFech
   
           {msg.tipo === 'ia' ? (
             <Box
-              bg={bgIABubble}
-              color={textColorIABubble}
+              bg="gray.100"
               p={3}
-              borderRadius="20px 20px 20px 0"
+              borderRadius="20px 20px 20px 0px"
               maxW="80%"
               fontSize="sm"
+              textAlign="left"
               whiteSpace="pre-wrap"
               wordBreak="break-word"
               dangerouslySetInnerHTML={{ __html: msg.texto }}
             />
           ) : (
             <Box
-              bg={bgUserBubble}
-              color={textColorUserBubble}
+              bg="blue.100"
               p={3}
-              borderRadius="20px 20px 0 20px"
+              borderRadius="20px 20px 0px 20px"
               maxW="80%"
               fontSize="sm"
+              textAlign="left"
               whiteSpace="pre-wrap"
               wordBreak="break-word"
             >
@@ -230,12 +220,11 @@ export default function AgenteIAFlutuante({ empresasData, forcarAbertura, onFech
   
       {loading && (
         <Flex justify="flex-start" align="center" gap={2} px={1}>
-          <GloboIAAnimado pensando />
+          <GloboIAAnimado pensando={true} />
           <Box
-            bg={bgIABubble}
-            color={textColorIABubble}
+            bg="gray.100"
             p={3}
-            borderRadius="20px 20px 20px 0"
+            borderRadius="20px 20px 20px 0px"
             maxW="80%"
             fontSize="sm"
           >
@@ -245,7 +234,6 @@ export default function AgenteIAFlutuante({ empresasData, forcarAbertura, onFech
           </Box>
         </Flex>
       )}
-  
       <div ref={mensagensEndRef} />
     </VStack>
   )
@@ -306,75 +294,76 @@ export default function AgenteIAFlutuante({ empresasData, forcarAbertura, onFech
     <>
       <Box position="fixed" bottom="80px" right="30px" zIndex="9999">
         {!isMobile && (
-          chatOpen ? (
-            <Box
-              bg={bgCard}
-              p={4}
-              shadow="2xl"
-              borderRadius="lg"
-              w="380px"
-              maxH="600px"
-              display="flex"
-              flexDirection="column"
-            >
-              {renderizarMensagens()}
-              <Flex mt={3} gap={2}>
-                <Input
-                  bg={inputBg}
-                  placeholder="Digite sua pergunta..."
-                  value={perguntaAtual}
-                  onChange={e => setPerguntaAtual(e.target.value)}
-                  onKeyPress={e => e.key === 'Enter' && enviarPergunta()}
-                  isDisabled={loading}
-                  size="sm"
-                  flex="1"
-                />
-                <IconButton
-                  colorScheme="blue"
-                  onClick={enviarPergunta}
-                  size="sm"
-                  icon={<FaPaperPlane />}
-                  isLoading={loading}
-                  aria-label="Enviar pergunta"
-                />
-              </Flex>
-              <Button
-                leftIcon={<CloseIcon />}
-                size="sm"
-                colorScheme="red"
-                variant="ghost"
-                mt={2}
-                onClick={toggleChat}
+          <>
+            {chatOpen ? (
+              <Box
+                bg="white"
+                p={4}
+                shadow="2xl"
+                borderRadius="lg"
+                w="380px"
+                maxH="600px"
+                overflow="hidden"
+                display="flex"
+                flexDirection="column"
               >
-                Fechar
-              </Button>
-            </Box>
-          ) : (
-            <IconButton
-              colorScheme="blue"
-              aria-label="Abrir Agente IA"
-              icon={<ChatIcon />}
-              isRound
-              size="lg"
-              onClick={toggleChat}
-              shadow="lg"
-            />
-          )
+                {renderizarMensagens()}
+                <Flex mt={3} gap={2}>
+                  <Input
+                    placeholder="Digite sua pergunta..."
+                    value={perguntaAtual}
+                    onChange={e => setPerguntaAtual(e.target.value)}
+                    onKeyPress={(e) => { if (e.key === 'Enter') enviarPergunta() }}
+                    isDisabled={loading}
+                    size="sm"
+                    flex="1"
+                  />
+                  <IconButton
+                    colorScheme="blue"
+                    onClick={enviarPergunta}
+                    size="sm"
+                    icon={<FaPaperPlane />}
+                    isLoading={loading}
+                    aria-label="Enviar pergunta"
+                  />
+                </Flex>
+                <Button
+                  leftIcon={<CloseIcon />}
+                  size="sm"
+                  colorScheme="red"
+                  variant="ghost"
+                  mt={2}
+                  onClick={toggleChat}
+                >
+                  Fechar
+                </Button>
+              </Box>
+            ) : (
+              <IconButton
+                colorScheme="blue"
+                aria-label="Abrir Agente IA"
+                icon={<ChatIcon />}
+                isRound
+                size="lg"
+                onClick={toggleChat}
+                shadow="lg"
+              />
+            )}
+          </>
         )}
       </Box>
-  
+
+      {/* Modal Fullscreen para Mobile */}
       <Modal isOpen={isOpen} onClose={onClose} size="full" scrollBehavior="inside">
         <ModalOverlay />
-        <ModalContent bg={bgCard}>
-          <ModalHeader>
+        <ModalContent>
+        <ModalHeader>
             <Flex align="center" justify="center" gap={3}>
-              <GloboOrbitaHeader />
+            <GloboOrbitaHeader />
+
               <Box textAlign="center">
                 <Box fontWeight="bold" fontSize="lg">
-                  Orbita{' '}
-                  <Box as="span" fontSize="sm" color={versionColor}>
-                    v1.0
-                  </Box>
+                  Orbita <Box as="span" fontSize="sm" color="gray.500">v1.0</Box>
                 </Box>
               </Box>
             </Flex>
@@ -385,11 +374,10 @@ export default function AgenteIAFlutuante({ empresasData, forcarAbertura, onFech
           <ModalFooter flexDirection="column" gap={2}>
             <Flex gap={2} w="full">
               <Input
-                bg={inputBg}
                 placeholder="Digite sua pergunta..."
                 value={perguntaAtual}
                 onChange={e => setPerguntaAtual(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && enviarPergunta()}
+                onKeyPress={(e) => { if (e.key === 'Enter') enviarPergunta() }}
                 isDisabled={loading}
                 size="md"
                 flex="1"
@@ -411,6 +399,4 @@ export default function AgenteIAFlutuante({ empresasData, forcarAbertura, onFech
       </Modal>
     </>
   )
-  
-  
 }

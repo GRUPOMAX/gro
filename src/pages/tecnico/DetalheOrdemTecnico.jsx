@@ -470,9 +470,15 @@ import {
                 <BotaoReagendar ordem={ordem} flex="1" />
                 {chegueiLocal && (
                   <BotaoPendenciar
-                    flex="1"
-                    onConfirmar={(motivo) => handlePendenciar(motivo)}
-                  />
+                        flex="1"
+                        ordem={ordem} // ✅ envia ordem completa
+                        ordemId={ordem.UnicID_OS}
+                        UnicID_Empresa={ordem.UnicID_Empresa}
+                        onConfirmar={(motivo) => handlePendenciar(motivo)}
+                      />
+
+
+
                 )}
               </Flex>
             )}

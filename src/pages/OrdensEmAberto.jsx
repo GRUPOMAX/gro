@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import {
   Box,
@@ -8,21 +9,28 @@ import {
   Badge,
   useToast,
   useBreakpointValue,
-  Flex // 👈 adiciona aqui
+  Flex,
+  Input,
+  Select,
+  Textarea,
+  Collapse,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useDisclosure,
+  useColorModeValue,
+  Tooltip,
+  IconButton,
+  HStack,
+  Link,
 } from '@chakra-ui/react'
-import {
-    Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton,
-    ModalBody, ModalFooter, Button, Textarea
-  } from '@chakra-ui/react'
+import { CopyIcon, ExternalLinkIcon, DownloadIcon } from '@chakra-ui/icons'
 
-import { CopyIcon, ExternalLinkIcon } from '@chakra-ui/icons'
-import { Tooltip, IconButton, HStack, Link } from '@chakra-ui/react'
-import { DownloadIcon } from '@chakra-ui/icons'
-
-
-import { useDisclosure } from '@chakra-ui/react'
-import { Select } from '@chakra-ui/react' // certifique-se de importar
-import { Collapse } from '@chakra-ui/react'
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons'
 
 
@@ -50,6 +58,31 @@ function OrdensEmAberto() {
   const [dataFinal, setDataFinal] = useState('')
   const [statusSelecionado, setStatusSelecionado] = useState('') // <-- 👈 filtro novo aqui!
 
+  // === variáveis de cores para modo claro/escuro ===
+  const pageBg      = useColorModeValue('gray.50', 'gray.800')
+  const textColor   = useColorModeValue('gray.800', 'white')
+  const inputBg     = useColorModeValue('white',   'gray.700')
+  const inputBorder = useColorModeValue('gray.300','gray.600')
+  const cardBg      = useColorModeValue('white',   'gray.800')
+  const borderClr   = useColorModeValue('gray.200','gray.600')
+  const hoverBg     = useColorModeValue('gray.100','gray.700')
+
+  const andamentoBg       = useColorModeValue('gray.50', 'gray.700')
+  const andamentoBorder   = useColorModeValue('gray.200','gray.600')
+  const andamentoItemBg   = useColorModeValue('gray.100','gray.600')
+  const fieldLabelColor   = useColorModeValue('gray.600','gray.400')
+  const selectBg          = useColorModeValue('white','gray.700')
+  const selectBorder      = useColorModeValue('gray.300','gray.600')
+
+  const detailsBg     = useColorModeValue('gray.100', 'gray.700')
+  const detailsBorder = useColorModeValue('gray.200', 'gray.600')
+  const detailsText   = useColorModeValue('gray.800', 'gray.200')
+  const linkColor     = useColorModeValue('blue.500', 'blue.300')
+
+  
+  const novaBg     = useColorModeValue('purple.50','purple.900')
+  const novaBorder = useColorModeValue('purple.300','purple.700')
+  const novaHover  = useColorModeValue('purple.100','purple.800')
 
 
   useEffect(() => {
@@ -189,7 +222,7 @@ function OrdensEmAberto() {
             console.log('📦 Enviando notificação após mudança de status:', payload);
 
             try {
-              await fetch('http://localhost:33003/notificar', {
+              await fetch('https://service-notify-sgo.nexusnerds.com.br/notificar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -275,369 +308,57 @@ function OrdensEmAberto() {
 
 
   return (
-
-    <Box display="flex">
+    <Box display="flex" bg={pageBg} color={textColor} minH="100vh">
       {!isMobile && <AdminSidebarDesktop />}
-      {isMobile && <AdminMobileMenu />}
+      {isMobile  && <AdminMobileMenu />}
 
-      <Box
-        p={6}
-        ml={!isMobile ? '250px' : 0}
-        w="full"
-        pb={isMobile ? '60px' : 0}
-      >
+      <Box p={6} ml={!isMobile ? '250px' : 0} w="full" pb={isMobile ? '60px' : 0}>
         {isMobile && <AdminBottomNav />}
 
         <Heading size="lg" mb={4}>Todas as Ordens</Heading>
 
-        <Flex mb={4} gap={4} align="center" flexWrap="wrap">
-              <Box>
-                <Text fontSize="sm" mb={1}>Data Inicial</Text>
-                <input
-                  type="date"
-                  value={dataInicial}
-                  onChange={(e) => setDataInicial(e.target.value)}
-                  style={{ padding: '8px', borderRadius: '8px', border: '1px solid #ccc' }}
-                />
-              </Box>
-
-              <Box>
-                <Text fontSize="sm" mb={1}>Data Final</Text>
-                <input
-                  type="date"
-                  value={dataFinal}
-                  onChange={(e) => setDataFinal(e.target.value)}
-                  style={{ padding: '8px', borderRadius: '8px', border: '1px solid #ccc' }}
-                />
-              </Box>
-
-
-
-          <Box>
-            <Text fontSize="sm" mb={1}>Filtrar por Status</Text>
-            <Select
-              placeholder="Todos os Status"
-              value={statusSelecionado}
-              onChange={(e) => setStatusSelecionado(e.target.value)}
-              w="200px"
-            >
-              <option value="Em Aberto">Em Aberto</option>
-              <option value="Atribuido">Atribuído</option>
-              <option value="Enviado">Enviado</option>
-              <option value="Execução">Execução</option>
-              <option value="Pendente">Pendente</option>
-              <option value="Improdutivo">Improdutivo</option>
-              <option value="Cancelado">Cancelado</option>
-              <option value="Agendada">Agendada</option>
-              <option value="Finalizado">Finalizado</option>
-            </Select>
-          </Box>
-        </Flex>
-
-
-            
-
-        {loading ? (
-          <Spinner size="xl" />
-        ) : (
-          <VStack align="stretch" spacing={4}>
-            {ordens
-              .filter((os) => {
-                const dataEnvio = new Date(os.Data_Envio_OS)
-                const inicio = dataInicial ? new Date(dataInicial + 'T00:00:00') : null
-                const fim = dataFinal ? new Date(dataFinal + 'T23:59:59') : null
-
-                let dentroDoPeriodo = true
-
-                if (inicio && fim) {
-                  dentroDoPeriodo = dataEnvio >= inicio && dataEnvio <= fim
-                } else if (inicio) {
-                  dentroDoPeriodo = dataEnvio >= inicio
-                } else if (fim) {
-                  dentroDoPeriodo = dataEnvio <= fim
-                }
-
-                const statusCorreto = !statusSelecionado || os.Status_OS === statusSelecionado
-
-                return dentroDoPeriodo && statusCorreto
-              })
-              .map((os) => {
-              const dataEnvio = new Date(os.Data_Envio_OS)
-              const agora = new Date()
-              const diferencaMinutos = (agora - dataEnvio) / (1000 * 60)
-              const ordemNova = diferencaMinutos <= 5 // ⚡ Nova se criada nos últimos 5 min
-
-              return (
-                <Box
-                  key={os.UnicID_OS}
-                  p={4}
-                  borderWidth="1px"
-                  borderRadius="md"
-                  bg={ordemNova ? "purple.50" : "white"} // muda fundo se for nova
-                  boxShadow={ordemNova ? "md" : "sm"} // sombra maior se nova
-                  borderColor={ordemNova ? "purple.300" : "gray.200"}
-                  position="relative"
-                  transition="all 0.2s"
-                  _hover={{
-                    boxShadow: 'md',
-                    cursor: 'pointer',
-                    bg: ordemNova ? "purple.100" : "gray.50"
-                  }}
-                  onClick={() => {
-                    setOrdemSelecionada(os)
-                    setMensagemAndamento(os.Observacao_Administrador || '')
-                    setNovoStatus(os.Status_OS)
-                    onOpen()
-                  }}
-                >
-
-                  {/* Badge indicando que é nova */}
-                  {ordemNova && (
-                    <Badge
-                      colorScheme="purple"
-                      position="absolute"
-                      top={2}
-                      left={2}
-                      borderRadius="full"
-                      px={2}
-                      py={1}
-                      fontSize="xs"
-                      animation="pulse 2s infinite"
-                    >
-                      NOVA ORDEM
-                    </Badge>
-                  )}
-
-                  {/* Botão no canto superior (só desktop) */}
-                  {!isMobile && (
-                    <Box position="absolute" top={2} right={2} zIndex={1}>
-                      <Button
-                        size="sm"
-                        colorScheme="purple"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setOrdemSelecionada(os)
-                          onOpenObservacao()
-                        }}
-                      >
-                        Adicionar Observação
-                      </Button>
-                    </Box>
-                  )}
-
-                  {/* Conteúdo da O.S */}
-                  <VStack align="start" spacing={2}>
-                    <Text fontWeight="bold">Empresa: {os.empresa}</Text>
-                    <Text>Tipo: {os.Tipo_OS}</Text>
-                    <Text>Cliente: {os.Nome_Cliente}</Text>
-                    <Text>Endereço: {os.Endereco_Cliente}</Text>
-                    <Text>
-                      {os.Status_OS === 'Finalizado'
-                        ? `Data de Finalização: ${new Date(os.Data_Entrega_OS).toLocaleString('pt-BR')}`
-                        : `Data de Envio: ${new Date(os.Data_Envio_OS).toLocaleString('pt-BR')}`}
-                    </Text>
-
-                    {/* NOVO FLEX AGRUPANDO BADGES */}
-                    <Flex align="center" gap={2} mt={2} mb={1} flexWrap="wrap">
-                      <Badge
-                        colorScheme={
-                          os.Status_OS === 'Pendente' ? 'yellow'
-                          : os.Status_OS === 'Finalizado' ? 'green'
-                          : os.Status_OS === 'Execução' ? 'blue'
-                          : os.Status_OS === 'Atribuido' ? 'purple'
-                          : os.Status_OS === 'Improdutivo' ? 'red'
-                          : os.Status_OS === 'Agendada' ? 'pink'
-                          : os.Status_OS === 'Cancelado' ? 'pink'
-                          : 'gray'
-                        }
-                      >
-                        {os.Status_OS}
-                      </Badge>
-
-                      <Badge
-                        colorScheme={
-                          os.TipoCliente === 'Empresarial' ? 'blue'
-                          : os.TipoCliente === 'Residencial' ? 'green'
-                          : 'gray'
-                        }
-                        fontSize="0.7em"
-                        p={1}
-                        rounded="md"
-                      >
-                        {os.TipoCliente || 'Tipo não informado'}
-                      </Badge>
-                    </Flex>
-
-
-
-                    
-                  </VStack>
-                </Box>
-              )
-            })}
-          </VStack>
-
-        )}
-
-        
-
-
-
-        
-        <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
-        <ModalOverlay />
-
-
-
-        <ModalContent
-                borderRadius="2xl"
-                bg="gray.50"
-                maxH="90vh" // limite de altura do modal
-                overflow="hidden" // evita que o modal inteiro "vaze"
-                >
-                <ModalHeader
-                    fontSize="xl"
-                    fontWeight="bold"
-                    textAlign="center"
-                    borderBottom="1px solid #E2E8F0"
-                    pb={2}
-                >
-                    📝 Ordem de Serviço
-                </ModalHeader>
-            <ModalCloseButton />
-
-            <ModalBody
-                mt={4}
-                overflowY="auto"
-                maxH="65vh" // o conteúdo interno poderá rolar se passar disso
-                px={4}
-            >
-                {isMobile && (
-                <Box mb={4} display="flex" justifyContent="flex-end">
-                    <Button
-                    size="sm"
-                    colorScheme="purple"
-                    onClick={() => {
-                        onOpenObservacao()
-                        onClose() // opcional: fecha o modal atual pra focar no de observação
-                    }}
-                    >
-                    Adicionar Observação
-                    </Button>
-                </Box>
-                )}
-
-
-            <Text fontSize="sm" color="gray.500" mb={2}>Técnico Responsável</Text>
-            <Text fontWeight="semibold" mb={4}>{ordemSelecionada?.Tecnico_Responsavel}</Text>
-
-            <Select
-                mb={4}
-                value={mostrarDetalhes ? 'ver' : 'ocultar'}
-                onChange={() => setMostrarDetalhes(!mostrarDetalhes)}
-            >
-                <option value="ver">Ver detalhes completos</option>
-                <option value="ocultar">Ocultar detalhes</option>
-            </Select>
-
-            {mostrarDetalhes && (
-                <Box mt={2} bg="gray.100" p={4} borderRadius="md">
-                <Text><strong>Nº da O.S.:</strong> {ordemSelecionada?.Numero_OS}</Text>
-
-                <Box display="flex" alignItems="center" gap={2}>
-                    <Text><strong>Telefone 1:</strong> {ordemSelecionada?.Telefone1_Cliente}</Text>
-                    <Button size="xs" onClick={() => navigator.clipboard.writeText(ordemSelecionada?.Telefone1_Cliente)}>Copiar</Button>
-                </Box>
-
-                <Box display="flex" alignItems="center" gap={2}>
-                    <Text><strong>Telefone 2:</strong> {ordemSelecionada?.Telefone2_Cliente}</Text>
-                    <Button size="xs" onClick={() => navigator.clipboard.writeText(ordemSelecionada?.Telefone2_Cliente)}>Copiar</Button>
-                </Box>
-
-                <Text><strong>Endereço:</strong> {ordemSelecionada?.Endereco_Cliente}</Text>
-                <Text><strong>Obs. Empresa:</strong> {ordemSelecionada?.Observacao_Empresa}</Text>
-                <Text><strong>Data de Envio:</strong> {new Date(ordemSelecionada?.Data_Envio_OS).toLocaleString('pt-BR')}</Text>
-                <Text>
-                    <strong>Geolocalização:</strong>{' '}
-                    <a
-                    href={`https://www.google.com/maps?q=${ordemSelecionada?.Geolocalizacao?.latitude},${ordemSelecionada?.Geolocalizacao?.longitude}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: 'blue' }}
-                    >
-                    Ver no Mapa
-                    </a>
-                </Text>
-                </Box>
-            )}
-
-            <Box mt={6}>
-              <Text fontSize="sm" color="gray.500" mb={1}>Tipo</Text>
-              <Flex justify="space-between" align="center">
-                <Text fontSize="lg" fontWeight="bold">{ordemSelecionada?.Tipo_OS}</Text>
-                {ordemSelecionada?.Link_Ordem_PDF && (
-                  <Button
-                    size="sm"
-                    colorScheme="blue"
-                    variant="outline"
-                    as="a"
-                    href={ordemSelecionada.Link_Ordem_PDF}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Baixar Ordem
-                  </Button>
-                )}
-
-              </Flex>
+          {/* filtros de data e status */}
+          <Flex
+            mb={4}
+            gap={4}
+            flexWrap="wrap"
+            align="flex-start"
+            direction={{ base: 'column', md: 'row' }}
+          >
+            <Box flex={{ md: 'none' }} w={{ base: '100%', md: 'auto' }} maxW={{ md: '200px' }}>
+              <Text fontSize="sm" mb={1}>Data Inicial</Text>
+              <Input
+                type="date"
+                bg={inputBg}
+                borderColor={inputBorder}
+                value={dataInicial}
+                onChange={e => setDataInicial(e.target.value)}
+                w="100%"
+              />
             </Box>
 
-
-            <Box mt={4}>
-                <Text fontSize="sm" color="gray.500">Cliente</Text>
-                <Text fontSize="lg" fontWeight="bold">{ordemSelecionada?.Nome_Cliente}</Text>
+            <Box flex={{ md: 'none' }} w={{ base: '100%', md: 'auto' }} maxW={{ md: '200px' }}>
+              <Text fontSize="sm" mb={1}>Data Final</Text>
+              <Input
+                type="date"
+                bg={inputBg}
+                borderColor={inputBorder}
+                value={dataFinal}
+                onChange={e => setDataFinal(e.target.value)}
+                w="100%"
+              />
             </Box>
 
-            <Box mb={4}>
-                <Text fontSize="sm" color="gray.600" mb={1}>Andamento Técnico:</Text>
-
-        <Box
-            bg="gray.50"
-            p={2}
-            borderRadius="md"
-            maxHeight="150px"  // 🔁 Altura máxima
-            overflowY="auto"   // 🔁 Habilita scroll
-            border="1px solid #E2E8F0"
-        >
-            {ordemSelecionada?.Andamento_técnico &&
-            Object.values(ordemSelecionada.Andamento_técnico).map((msg, index) => (
-                <Box
-                key={index}
-                bg="gray.100"
-                p={3}
-                borderRadius="md"
-                mb={2}
-                fontSize="sm"
-                fontFamily="mono"
-                whiteSpace="pre-wrap"
-                >
-                {msg}
-                </Box>
-            ))}
-        </Box>
-        </Box>
-
-
-
-            <Box mt={4}>
-                <Text fontSize="sm" color="gray.600" mb={1}>Status:</Text>
-                <Select
-                value={novoStatus}
-                onChange={(e) => setNovoStatus(e.target.value)}
-                bg="white"
-                borderColor="gray.300"
-                borderRadius="lg"
-                >
+            <Box flex={{ md: 'none' }} w={{ base: '100%', md: 'auto' }} maxW={{ md: '200px' }}>
+              <Text fontSize="sm" mb={1}>Filtrar por Status</Text>
+              <Select
+                placeholder="Todos os Status"
+                value={statusSelecionado}
+                onChange={e => setStatusSelecionado(e.target.value)}
+                bg={inputBg}
+                borderColor={inputBorder}
+                w="100%"
+              >
                 <option value="Em Aberto">Em Aberto</option>
                 <option value="Atribuido">Atribuído</option>
                 <option value="Enviado">Enviado</option>
@@ -645,24 +366,298 @@ function OrdensEmAberto() {
                 <option value="Pendente">Pendente</option>
                 <option value="Improdutivo">Improdutivo</option>
                 <option value="Cancelado">Cancelado</option>
+                <option value="Agendada">Agendada</option>
                 <option value="Finalizado">Finalizado</option>
-                </Select>
+              </Select>
             </Box>
+          </Flex>
 
-            {['Cancelado', 'Improdutivo'].includes(novoStatus) && (
-              <Box mt={4}>
-                <Text fontSize="sm" color="gray.600" mb={1}>Justificativa:</Text>
-                <Textarea
-                  placeholder="Descreva a justificativa para o status selecionado..."
-                  value={novaObservacao}
-                  onChange={(e) => setNovaObservacao(e.target.value)}
-                  isRequired
-                  h="150px" // Altura fixa da Textarea
-                  resize="none" // Impede que o usuário aumente com o mouse
-                />
+
+        {loading ? (
+          <Spinner size="xl" />
+        ) : (
+          <VStack align="stretch" spacing={4}>
+            {ordens
+              .filter(os => {
+                const envio = new Date(os.Data_Envio_OS)
+                const inicio = dataInicial ? new Date(dataInicial + 'T00:00:00') : null
+                const fim    = dataFinal   ? new Date(dataFinal   + 'T23:59:59') : null
+                let ok = true
+                if (inicio && fim) ok = envio >= inicio && envio <= fim
+                else if (inicio)   ok = envio >= inicio
+                else if (fim)      ok = envio <= fim
+                const statusOk = !statusSelecionado || os.Status_OS === statusSelecionado
+                return ok && statusOk
+              })
+              .map(os => {
+                const envio = new Date(os.Data_Envio_OS)
+                const diff  = (Date.now() - envio) / 1000 / 60
+                const nova  = diff <= 5
+                return (
+                    <Box
+                      key={os.UnicID_OS}
+                      position="relative"
+                      p={4}
+                      bg={nova ? novaBg : cardBg}
+                      borderWidth="1px"
+                      borderColor={nova ? novaBorder : borderClr}
+                      borderRadius="md"
+                      _hover={{ bg: nova ? novaHover : hoverBg, cursor: 'pointer' }}
+                      onClick={() => {
+                        setOrdemSelecionada(os)
+                        setMensagemAndamento(os.Observacao_Administrador || '')
+                        setNovoStatus(os.Status_OS)
+                        onOpen()
+                      }}
+                    >
+                      {!isMobile && (
+                        <Box position="absolute" top={2} right={2} zIndex={1}>
+                          <Button
+                            size="sm"
+                            colorScheme="purple"
+                            onClick={e => {
+                              e.stopPropagation()
+                              setOrdemSelecionada(os)
+                              onOpenObservacao()
+                            }}
+                          >
+                            Adicionar Observação
+                          </Button>
+                        </Box>
+                      )}
+
+                      <VStack align="start" spacing={2}>
+                        {nova && (
+                          <Badge
+                            colorScheme="purple"
+                            borderRadius="full"
+                            px={2}
+                            py={1}
+                            fontSize="xs"
+                            animation="pulse 2s infinite"
+                            mb={1}
+                          >
+                            NOVA ORDEM
+                          </Badge>
+                        )}
+
+                        <Text fontWeight="bold">Empresa: {os.empresa}</Text>
+                        <Text>Tipo: {os.Tipo_OS}</Text>
+                        <Text>Cliente: {os.Nome_Cliente}</Text>
+                        <Text>Endereço: {os.Endereco_Cliente}</Text>
+                        <Text>
+                          {os.Status_OS === 'Finalizado'
+                            ? `Data de Finalização: ${new Date(os.Data_Entrega_OS).toLocaleString('pt-BR')}`
+                            : `Data de Envio: ${new Date(os.Data_Envio_OS).toLocaleString('pt-BR')}`}
+                        </Text>
+
+                        <Flex align="center" gap={2} mt={2} mb={1} flexWrap="wrap">
+                          <Badge
+                            colorScheme={
+                              os.Status_OS === 'Pendente'     ? 'yellow'
+                              : os.Status_OS === 'Finalizado' ? 'green'
+                              : os.Status_OS === 'Execução'   ? 'blue'
+                              : os.Status_OS === 'Atribuido'  ? 'purple'
+                              : os.Status_OS === 'Improdutivo'? 'red'
+                              : os.Status_OS === 'Agendada'   ? 'pink'
+                              : os.Status_OS === 'Cancelado'  ? 'pink'
+                              : 'gray'
+                            }
+                          >
+                            {os.Status_OS}
+                          </Badge>
+                          <Badge
+                            colorScheme={os.TipoCliente === 'Empresarial' ? 'blue' : 'green'}
+                            fontSize="0.7em"
+                            p={1}
+                            rounded="md"
+                          >
+                            {os.TipoCliente || 'Tipo não informado'}
+                          </Badge>
+                        </Flex>
+                      </VStack>
+                    </Box>
+
+                )
+              })
+            }
+          </VStack>
+        )}
+
+
+
+        {/* Modal principal */}
+        <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
+            <ModalOverlay />
+            <ModalContent bg={pageBg} borderRadius="2xl" maxH="90vh" overflow="hidden">
+            <ModalHeader px={4} py={2} borderBottom="1px solid #E2E8F0">
+                <Flex align="center" justify="space-between">
+                  <Text fontSize="xl" fontWeight="bold">📝 Ordem de Serviço</Text>
+                </Flex>
+              </ModalHeader>
+
+
+
+
+
+              
+              <ModalCloseButton />
+              <ModalBody mt={4} overflowY="auto" maxH="65vh" px={4}>
+              {isMobile && (
+                <Box mb={4} display="flex" justifyContent="flex-end">
+                  <Button 
+                    size="sm" 
+                    colorScheme="purple" 
+                    onClick={() => { 
+                          onOpenObservacao(); 
+                          onClose(); 
+                        }}
+                        >
+                    Adicionar Observação
+                  </Button>
+                </Box>
+              )}
+
+
+
+
+
+
+
+              
+              <Text fontSize="sm" color="gray.500" mb={2}>Técnico Responsável</Text>
+              <Text fontWeight="semibold" mb={4}>{ordemSelecionada?.Tecnico_Responsavel}</Text>
+
+              <Select mb={4} value={mostrarDetalhes ? 'ver' : 'ocultar'} onChange={() => setMostrarDetalhes(!mostrarDetalhes)}>
+                <option value="ver">Ver detalhes completos</option>
+                <option value="ocultar">Ocultar detalhes</option>
+              </Select>
+
+              {mostrarDetalhes && (
+                  <Box
+                    mt={2}
+                    bg={detailsBg}
+                    borderWidth="1px"
+                    borderColor={detailsBorder}
+                    p={4}
+                    borderRadius="md"
+                    color={detailsText}
+                  >
+                    <Text><strong>Nº da O.S.:</strong> {ordemSelecionada?.Numero_OS}</Text>
+
+                    <Flex align="center" gap={2}>
+                      <Text><strong>Telefone 1:</strong> {ordemSelecionada?.Telefone1_Cliente}</Text>
+                      <Button size="xs" onClick={() => navigator.clipboard.writeText(ordemSelecionada?.Telefone1_Cliente)}>
+                        Copiar
+                      </Button>
+                    </Flex>
+
+                    <Flex align="center" gap={2}>
+                      <Text><strong>Telefone 2:</strong> {ordemSelecionada?.Telefone2_Cliente}</Text>
+                      <Button size="xs" onClick={() => navigator.clipboard.writeText(ordemSelecionada?.Telefone2_Cliente)}>
+                        Copiar
+                      </Button>
+                    </Flex>
+
+                    <Text><strong>Endereço:</strong> {ordemSelecionada?.Endereco_Cliente}</Text>
+                    <Text><strong>Obs. Empresa:</strong> {ordemSelecionada?.Observacao_Empresa}</Text>
+                    <Text>
+                      <strong>Data de Envio:</strong>{' '}
+                      {new Date(ordemSelecionada?.Data_Envio_OS).toLocaleString('pt-BR')}
+                    </Text>
+
+                    <Text>
+                      <strong>Geolocalização:</strong>{' '}
+                      <Link
+                        href={`https://www.google.com/maps?q=${ordemSelecionada?.Geolocalizacao?.latitude},${ordemSelecionada?.Geolocalizacao?.longitude}`}
+                        isExternal
+                        color={linkColor}
+                      >
+                        Ver no Mapa <ExternalLinkIcon mx="2px" />
+                      </Link>
+                    </Text>
+                  </Box>
+                )}
+
+
+              <Box mt={6}>
+                <Text fontSize="sm" color="gray.500" mb={1}>Tipo</Text>
+                <Flex justify="space-between" align="center">
+                  <Text fontSize="lg" fontWeight="bold">{ordemSelecionada?.Tipo_OS}</Text>
+                  {ordemSelecionada?.Link_Ordem_PDF && (
+                    <Button size="sm" colorScheme="blue" variant="outline" as="a" href={ordemSelecionada.Link_Ordem_PDF} target="_blank">
+                      Baixar Ordem <DownloadIcon ml="1" />
+                    </Button>
+                  )}
+                </Flex>
               </Box>
-            )}
 
+              <Box mt={4}>
+                  <Text fontSize="sm" color={fieldLabelColor} mb={1}>Andamento Técnico:</Text>
+                  <Box
+                    bg={andamentoBg}
+                    p={2}
+                    borderRadius="md"
+                    maxH="150px"
+                    overflowY="auto"
+                    borderWidth="1px"
+                    borderColor={andamentoBorder}
+                  >
+                    {ordemSelecionada?.Andamento_técnico &&
+                      Object.values(ordemSelecionada.Andamento_técnico).map((msg, idx) => (
+                        <Box
+                          key={idx}
+                          bg={andamentoItemBg}
+                          p={3}
+                          borderRadius="md"
+                          mb={2}
+                          fontSize="sm"
+                          fontFamily="mono"
+                          whiteSpace="pre-wrap"
+                          wordBreak="break-word"
+                        >
+                          {msg}
+                        </Box>
+                      ))
+                    }
+                  </Box>
+                </Box>
+
+                <Box mt={4}>
+                  <Text fontSize="sm" color={fieldLabelColor} mb={1}>Status:</Text>
+                  <Select
+                    value={novoStatus}
+                    onChange={e => setNovoStatus(e.target.value)}
+                    bg={selectBg}
+                    borderColor={selectBorder}
+                    borderRadius="lg"
+                  >
+                    <option value="Em Aberto">Em Aberto</option>
+                    <option value="Atribuido">Atribuído</option>
+                    <option value="Enviado">Enviado</option>
+                    <option value="Execução">Execução</option>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Improdutivo">Improdutivo</option>
+                    <option value="Cancelado">Cancelado</option>
+                    <option value="Finalizado">Finalizado</option>
+                  </Select>
+                </Box>
+
+                {['Cancelado','Improdutivo'].includes(novoStatus) && (
+                  <Box mt={4}>
+                    <Text fontSize="sm" color={fieldLabelColor} mb={1}>Justificativa:</Text>
+                    <Textarea
+                      placeholder="Descreva a justificativa para o status selecionado..."
+                      value={novaObservacao}
+                      onChange={e => setNovaObservacao(e.target.value)}
+                      isRequired
+                      h="150px"
+                      resize="none"
+                      bg={selectBg}
+                      borderColor={selectBorder}
+                    />
+                  </Box>
+                )}
 
             <Box display="flex" justifyContent="space-between" alignItems="center" mt={6}>
                 <Box>
@@ -689,64 +684,44 @@ function OrdensEmAberto() {
                 {novoStatus.toUpperCase()}
                 </Badge>
             </Box>
+
+              {/* restante do conteúdo do modal… */}
             </ModalBody>
 
+
+
             <ModalFooter gap={2}>
-            <Button colorScheme="blue" onClick={salvarAlteracaoNoBanco}>
-                Salvar
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
-                Cancelar
-            </Button>
+              <Button colorScheme="blue" onClick={salvarAlteracaoNoBanco}>Salvar</Button>
+              <Button variant="ghost" onClick={onClose}>Cancelar</Button>
             </ModalFooter>
-        </ModalContent>
+          </ModalContent>
         </Modal>
 
+        {/* Modal de observação */}
         <Modal isOpen={isOpenObservacao} onClose={onCloseObservacao} isCentered>
-        <ModalOverlay />
-
-        <ModalContent
-            maxW="400px"
-            maxH="80vh" // Limita a altura do modal
-            overflowY="auto" // Ativa rolagem se passar
-          >
+          <ModalOverlay />
+          <ModalContent bg={pageBg} maxW="400px" maxH="80vh" overflowY="auto">
             <ModalHeader>Nova Observação</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
               <Textarea
                 placeholder="Escreva a nova observação..."
                 value={novaObservacao}
-                onChange={(e) => {
-                  if (e.target.value.length <= 300) {
-                    setNovaObservacao(e.target.value)
-                  }
-                }}
+                onChange={e => { if (e.target.value.length <= 300) setNovaObservacao(e.target.value) }}
                 maxLength={300}
-                h="150px" // Altura fixa da Textarea
-                resize="none" // Impede que o usuário aumente com o mouse
+                h="150px"
+                resize="none"
               />
               <Box mt={2} textAlign="right" fontSize="sm" color="gray.500">
                 {novaObservacao.length}/300 caracteres
               </Box>
             </ModalBody>
             <ModalFooter>
-              <Button colorScheme="purple" mr={3} onClick={salvarNovaObservacao}>
-                Salvar
-              </Button>
-              <Button variant="ghost" onClick={onCloseObservacao}>
-                Cancelar
-              </Button>
+              <Button colorScheme="purple" mr={3} onClick={salvarNovaObservacao}>Salvar</Button>
+              <Button variant="ghost" onClick={onCloseObservacao}>Cancelar</Button>
             </ModalFooter>
           </ModalContent>
-
-
-
-
         </Modal>
-
-
-
-
       </Box>
     </Box>
   )
