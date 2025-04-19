@@ -44,6 +44,14 @@ import OrdensPendenciadasEmpresa from './pages/empresa/OrdensPendenciadasEmpresa
 import DetalheOrdemPendenciadaEmpresa from './pages/empresa/DetalheOrdemPendenciadaEmpresa.jsx'
 import OrdensAgendadasEmpresa from './pages/empresa/OrdensAgendadasEmpresa.jsx'
 import OrdensImprodutivasEmpresa from './pages/empresa/OrdensImprodutivasEmpresa.jsx'
+import HistoricoOrdensEmpresa from './pages/empresa/HistoricoOrdensEmpresa.jsx'
+
+
+
+import DetalheOrdemFinalizadaEmpresaBackup from './pages/empresa/DetalheOrdemFinalizadaEmpresaBackup.jsx'
+import DetalheOrdemPendenciadaEmpresaBackup from './pages/empresa/DetalheOrdemPendenciadaEmpresaBackup.jsx'
+import DetalheOrdemCanceladaEmpresaBackup from './pages/empresa/DetalheOrdemCanceladaEmpresaBackup.jsx'
+
 
 import TecnicoDashboard from './pages/tecnico/TecnicoDashboard.jsx'
 import OrdensAtribuidasTecnico from './pages/tecnico/OrdensAtribuidasTecnico'
@@ -380,6 +388,12 @@ function App() {
           <Route path="/empresa/ordens-pendenciadas/:id" element={<DetalheOrdemPendenciadaEmpresa />} />
           <Route path="/empresa/ordens-agendadas" element={<OrdensAgendadasEmpresa />} />
           <Route path="/empresa/ordens-improdutivas" element={<OrdensImprodutivasEmpresa />} />
+          <Route path="/empresa/historico-ordens" element={<HistoricoOrdensEmpresa />} />
+
+
+          <Route path="/empresa/ordem-pendenciada-backup/:id" element={<DetalheOrdemPendenciadaEmpresaBackup />} />
+          <Route path="/empresa/ordem-finalizada-backup/:id" element={<DetalheOrdemFinalizadaEmpresaBackup />} />
+          <Route path="/empresa/ordem-cancelada-backup/:id" element={<DetalheOrdemCanceladaEmpresaBackup />} />
 
 
           <Route path="/tecnico/notificacoes" element={<NotificacoesTecnico />} />

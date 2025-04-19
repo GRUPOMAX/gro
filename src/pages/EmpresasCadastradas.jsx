@@ -46,7 +46,7 @@ function EmpresasCadastradas() {
   const [empresas, setEmpresas] = useState([])
   const [loading, setLoading] = useState(true)
   const [empresaSelecionada, setEmpresaSelecionada] = useState(null)
-  const [formEdit, setFormEdit] = useState({ empresa_nome: '', nome: '', Email: '', UnicID: '', telefone: '', password: ''  })
+  const [formEdit, setFormEdit] = useState({ empresa_nome: '', nome: '', Email: '', UnicID: '', telefone: '', password: '', 'Dia de Fechamento': '' })
   const { isOpen, onOpen, onClose } = useDisclosure()
   const toast = useToast()
   const isMobile = useBreakpointValue({ base: true, md: false })
@@ -87,7 +87,9 @@ function EmpresasCadastradas() {
       telefone: empresa.telefone || '',
       UnicID: empresa.UnicID || '',
       password: empresa.password || '',
-      Limite_de_Ordem: empresa.Limite_de_Ordem || '' // Garantindo que o valor está correto
+      Limite_de_Ordem: empresa.Limite_de_Ordem || '', // Garantindo que o valor está correto
+      Dia_de_Fechamento: empresa['Dia de Fechamento'] ?? '', // 👈 Aqui converte espaço → underline
+
     });
     onOpen();
   };
@@ -96,9 +98,14 @@ function EmpresasCadastradas() {
 
   const handleChangeEdit = (e) => {
     const { name, value } = e.target;
-    if (name === 'Limite_de_Ordem' && !/^\d*$/.test(value)) return; // Evita caracteres não numéricos
+    if (name === 'Limite_de_Ordem' && !/^\d*$/.test(value)) return;
+    if (name === 'Dia_de_Fechamento' && (isNaN(value) || value < 1 || value > 31)) return;
+  
     setFormEdit((prev) => ({ ...prev, [name]: value }));
   };
+  
+  
+  
   
   
   const salvarEdicao = async () => {
@@ -111,6 +118,7 @@ function EmpresasCadastradas() {
       telefone: formEdit.telefone,
       UnicID: formEdit.UnicID,
       Limite_de_Ordem: formEdit.Limite_de_Ordem,
+      'Dia de Fechamento': formEdit.Dia_de_Fechamento, // 👈 converte underline → espaço
     };
   
     console.log('✅ recordId encontrado:', empresaSelecionada.recordId);
@@ -398,6 +406,20 @@ http://sgo.maxfibraltda.com.br
                         )}
                     </InputGroup>
                 </FormControl>
+
+                <FormControl>
+                  <FormLabel>Dia de Fechamento</FormLabel>
+                  <Input
+                    name="Dia_de_Fechamento"
+                    type="number"
+                    value={formEdit.Dia_de_Fechamento || ''}
+                    onChange={handleChangeEdit}
+                    min={1}
+                    max={31}
+                  />
+                </FormControl>
+
+
 
               </VStack>
             </ModalBody>

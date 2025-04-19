@@ -12,8 +12,15 @@ import {
   StatHelpText,
   useToast,
   Select,
-  useColorModeValue
+  useColorModeValue,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+  Text
 } from '@chakra-ui/react';
+
 import {
   AreaChart,
   Area,
@@ -32,6 +39,9 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis
 } from 'recharts';
+
+
+
 import NeuralNetworkCanvas from './NeuralNetworkCanvas';
 import { apiGet } from '../../services/api';
 import AdminSidebarDesktop from '../../components/admin/AdminSidebarDesktop';
@@ -63,6 +73,9 @@ export default function AdminMetricas() {
 
   const [dadosAPI, setDadosAPI] = useState([])    // onde vai cair o resultado das requisições
   const [error, setError]     = useState(null)    // pra guardar eventual erro
+  const [mensagemBackup, setMensagemBackup] = useState(null)
+
+
 
 
   const bgPage  = useColorModeValue('gray.50', 'gray.800');
@@ -120,6 +133,39 @@ export default function AdminMetricas() {
       setDadosAPI({ agrupado: {}, os: [] });
     });
   }, []);
+
+
+  useEffect(() => {
+    let ativo = true
+  
+    async function fetchStatusGeral() {
+      try {
+        const res = await fetch('https://backup-api-sgo.nexusnerds.com.br/status')
+        const status = await res.json()
+  
+        if (ativo) {
+          setDbOk(status.sucesso)
+          setMensagemBackup(status.mensagem || null)
+        }
+      } catch (err) {
+        console.error('Erro ao buscar status geral do sistema:', err)
+        if (ativo) {
+          setDbOk(false)
+          setMensagemBackup(`Erro de conexão: ${err.message}`)
+        }
+      }
+    }
+  
+    fetchStatusGeral()
+    const intervalo = setInterval(fetchStatusGeral, 5000)
+    return () => {
+      ativo = false
+      clearInterval(intervalo)
+    }
+  }, [])
+  
+  
+  
   
   
   
@@ -364,6 +410,37 @@ export default function AdminMetricas() {
       <Box flex="1" p={6} ml={{ base:0, md:'250px' }} pb={0}>
         <Heading mb={6}>Analise do Desenvolvedor</Heading>
 
+
+        <Accordion allowToggle mb={6}>
+          <AccordionItem>
+            <h2>
+              <AccordionButton bg={dbOk ? 'green.100' : 'red.100'}>
+                <Box flex="1" textAlign="left" fontWeight="bold">
+                  {dbOk
+                    ? '✅ Sistema de Backup funcionando corretamente'
+                    : '⚠️ Sistema de Backup apresentou erro recente'}
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+            </h2>
+            <AccordionPanel pb={4}>
+              <Text fontSize="sm" color="gray.600" mb={2}>
+                Este painel mostra o status da última execução da API de backup das ordens de serviço. Ele é atualizado automaticamente toda vez que uma empresa atinge o dia de fechamento e executa o processo de backup e limpeza.
+              </Text>
+
+              {mensagemBackup && (
+                <Box mt={3} p={3} bg="gray.50" border="1px solid #ccc" borderRadius="md">
+                  <Text fontSize="xs" color="gray.700">
+                    <strong>Mensagem:</strong> {mensagemBackup}
+                  </Text>
+                </Box>
+              )}
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
+
+
+
         <Grid templateColumns={{ base:'repeat(2,1fr)', md:'repeat(5,1fr)' }} gap={6} mb={10}>
           <CardMetricas label="Administração"     value={metricas.administracao} bgColor={chartBg}/>
           <CardMetricas label="Empresas"          value={metricas.empresas}  bgColor={chartBg}/>
@@ -440,6 +517,8 @@ export default function AdminMetricas() {
             {memoGraficoHistorico}
           </ResponsiveContainer>
         </Box>
+
+
       </Box>
     </Flex>
   );

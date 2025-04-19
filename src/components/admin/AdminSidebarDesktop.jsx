@@ -18,6 +18,7 @@ import {
   ModalFooter, 
   ModalCloseButton
 } from '@chakra-ui/react'
+import { FiClock } from 'react-icons/fi'
 import {
   FiHome, FiSettings, FiLogOut, FiChevronDown, FiChevronUp,
   FiUsers, FiClipboard, FiUser, FiPlusSquare, FiCalendar,
@@ -256,6 +257,17 @@ export default function SidebarAdminDesktop() {
               >
                 Métricas
               </Button>
+              <Button
+                leftIcon={<Icon as={FiClock} />}
+                variant={location.pathname === '/empresa/historico-ordens' ? 'solid' : 'ghost'}
+                bg={location.pathname === '/empresa/historico-ordens' ? 'blue.600' : 'transparent'}
+                justifyContent="start"
+                _hover={{ bg: hoverBg }}
+                onClick={() => navigate('/empresa/historico-ordens')}
+              >
+                Histórico de Ordens
+              </Button>
+
             </VStack>
           </>
         )}
